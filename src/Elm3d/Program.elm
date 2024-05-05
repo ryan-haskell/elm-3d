@@ -4,7 +4,6 @@ import Browser
 import Browser.Dom
 import Browser.Events
 import Elm3d.Camera
-import Elm3d.Internal.Node
 import Elm3d.Node
 import Elm3d.Window
 import Html exposing (Html)
@@ -21,6 +20,7 @@ type Model
     = Model
         { time : Float
         , window : ( Int, Int )
+        , nodes : List Elm3d.Node.Node
         }
 
 
@@ -45,16 +45,20 @@ new :
     -> Program
 new props =
     Browser.element
-        { init = init
+        { init = init props
         , update = update
         , subscriptions = subscriptions
         , view = view props
         }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Model { time = 0.0, window = ( 0, 0 ) }
+init : Props -> () -> ( Model, Cmd Msg )
+init { nodes } _ =
+    ( Model
+        { time = 0.0
+        , window = ( 0, 0 )
+        , nodes = nodes
+        }
     , Browser.Dom.getViewport
         |> Task.perform Viewport
     )
@@ -64,7 +68,21 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model model) =
     case msg of
         Frame dt ->
-            ( Model { model | time = model.time + dt }
+            let
+                time =
+                    model.time + dt
+
+                context : Elm3d.Node.Context
+                context =
+                    { dt = dt
+                    , time = time
+                    }
+            in
+            ( Model
+                { model
+                    | time = time
+                    , nodes = List.map (updateNode context) model.nodes
+                }
             , Cmd.none
             )
 
@@ -85,6 +103,16 @@ update msg (Model model) =
             )
 
 
+updateNode : Elm3d.Node.Context -> Elm3d.Node.Node -> Elm3d.Node.Node
+updateNode context node =
+    case Elm3d.Node.toUpdateFunction node of
+        Just fn ->
+            fn context node
+
+        Nothing ->
+            node
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
@@ -94,7 +122,7 @@ subscriptions model =
 
 
 view : Props -> Model -> Html Msg
-view { window, camera, nodes } (Model model) =
+view { window, camera } (Model model) =
     let
         size : ( Int, Int )
         size =
@@ -105,9 +133,9 @@ view { window, camera, nodes } (Model model) =
 
         viewWebGlCanvas : Html Msg
         viewWebGlCanvas =
-            nodes
+            model.nodes
                 |> List.map
-                    (Elm3d.Internal.Node.toEntity
+                    (Elm3d.Node.toEntity
                         { camera = Elm3d.Camera.toMatrix4 size camera
                         }
                     )
