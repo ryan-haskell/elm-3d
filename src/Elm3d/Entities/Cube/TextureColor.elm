@@ -14,9 +14,13 @@ vertexShader =
         uniform float scale;
         uniform mat4 camera;
         uniform mat4 modelView;
+        varying vec3 v_position;
+        varying mat4 v_modelView;
     
         void main () {
             gl_Position = camera * modelView * vec4(scale * position, 1.0);
+            v_position = position;
+            v_modelView = modelView;
         }
     |]
 
@@ -26,9 +30,22 @@ fragmentShader =
     [glsl|
         precision mediump float;
         uniform vec4 color;
+        uniform vec3 lightDirection;
+        varying vec3 v_position;
+        varying mat4 v_modelView;
 
         void main () {
+            vec3 normal = vec3(
+                v_position.x >= 0.5 ? 1.0 : v_position.x <= -0.5 ? -1.0 : 0.0,
+                v_position.y >= 0.5 ? 1.0 : v_position.y <= -0.5 ? -1.0 : 0.0,
+                v_position.z >= 0.5 ? 1.0 : v_position.z <= -0.5 ? -1.0 : 0.0
+            );
+
+            normal = mat3(v_modelView) * normal;
+
+            float light = dot(normalize(normal), normalize(lightDirection));
             gl_FragColor = color;
+            gl_FragColor.rgb *= light;
         }
     |]
 
@@ -43,11 +60,14 @@ type alias Uniforms =
     , camera : Matrix4
     , modelView : Matrix4
     , color : Color
+    , lightDirection : Vector3
     }
 
 
 type alias Varyings =
-    {}
+    { v_position : Vector3
+    , v_modelView : Matrix4
+    }
 
 
 toEntity : Uniforms -> WebGL.Entity

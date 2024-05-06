@@ -3,6 +3,7 @@ module Elm3d.Vector3 exposing
     , new, one, zero
     , positiveX, positiveY, positiveZ
     , fromRecord
+    , x, y, z
     )
 
 {-|
@@ -12,6 +13,8 @@ module Elm3d.Vector3 exposing
 @docs new, one, zero
 @docs positiveX, positiveY, positiveZ
 @docs fromRecord
+
+@docs x, y, z
 
 -}
 
@@ -48,10 +51,25 @@ positiveZ =
 
 
 new : Float -> Float -> Float -> Vector3
-new x y z =
-    Math.Vector3.vec3 x y z
+new x_ y_ z_ =
+    Math.Vector3.vec3 x_ y_ z_
 
 
 fromRecord : { x : Float, y : Float, z : Float } -> Vector3
 fromRecord record =
     Math.Vector3.fromRecord record
+
+
+x : Vector3 -> Float
+x vec3 =
+    Math.Vector3.getX vec3
+
+
+y : Vector3 -> Float
+y vec3 =
+    Math.Vector3.getY vec3
+
+
+z : Vector3 -> Float
+z vec3 =
+    Math.Vector3.getZ vec3

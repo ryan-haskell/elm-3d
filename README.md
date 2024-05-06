@@ -15,6 +15,7 @@ import Elm3d.Node exposing (Node)
 import Elm3d.Program exposing (Program)
 import Elm3d.Window
 
+
 main : Program
 main =
     Elm3d.Program.new
@@ -22,6 +23,7 @@ main =
         , camera = camera
         , nodes = [ cube ]
         }
+
 
 cube : Node
 cube =
@@ -33,6 +35,7 @@ cube =
     Elm3d.Node.cube { size = 1 }
         |> Elm3d.Node.withRotationY (pi / 4)
         |> Elm3d.Node.withOnUpdate update
+
 
 camera : Camera
 camera =

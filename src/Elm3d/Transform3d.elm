@@ -1,15 +1,21 @@
 module Elm3d.Transform3d exposing
     ( Transform3d, none
-    , withPosition, withRotationX, withRotationY, withRotationZ, withScale
-    , toRotationX, toRotationY
+    , withPosition, withRotation, withScale
+    , withRotationX, withRotationY, withRotationZ
+    , toPosition, toRotation, toScale
+    , toRotationX, toRotationY, toRotationZ
     , toMatrix4
     )
 
 {-|
 
 @docs Transform3d, none
-@docs withPosition, withRotationX, withRotationY, withRotationZ, withScale
-@docs toRotationX, toRotationY
+
+@docs withPosition, withRotation, withScale
+@docs withRotationX, withRotationY, withRotationZ
+
+@docs toPosition, toRotation, toScale
+@docs toRotationX, toRotationY, toRotationZ
 @docs toMatrix4
 
 -}
@@ -48,6 +54,21 @@ withPosition props (Transform3d transform) =
     Transform3d { transform | position = props }
 
 
+withRotation : Vector3 -> Transform3d -> Transform3d
+withRotation props (Transform3d transform) =
+    Transform3d
+        { transform
+            | rotationX = Elm3d.Vector3.x props
+            , rotationY = Elm3d.Vector3.y props
+            , rotationZ = Elm3d.Vector3.z props
+        }
+
+
+withScale : Vector3 -> Transform3d -> Transform3d
+withScale props (Transform3d transform) =
+    Transform3d { transform | scale = props }
+
+
 withRotationX : Float -> Transform3d -> Transform3d
 withRotationX props (Transform3d transform) =
     Transform3d { transform | rotationX = props }
@@ -63,19 +84,31 @@ withRotationZ props (Transform3d transform) =
     Transform3d { transform | rotationZ = props }
 
 
-withScale : Vector3 -> Transform3d -> Transform3d
-withScale props (Transform3d transform) =
-    Transform3d { transform | scale = props }
-
-
 toMatrix4 : Transform3d -> Matrix4
 toMatrix4 (Transform3d transform) =
-    Math.Matrix4.identity
-        |> Math.Matrix4.translate transform.position
+    Math.Matrix4.makeTranslate transform.position
+        |> Math.Matrix4.scale transform.scale
         |> Math.Matrix4.rotate transform.rotationX Elm3d.Vector3.positiveX
         |> Math.Matrix4.rotate transform.rotationY Elm3d.Vector3.positiveY
         |> Math.Matrix4.rotate transform.rotationZ Elm3d.Vector3.positiveZ
-        |> Math.Matrix4.scale transform.scale
+
+
+toPosition : Transform3d -> Vector3
+toPosition (Transform3d transform) =
+    transform.position
+
+
+toRotation : Transform3d -> Vector3
+toRotation (Transform3d transform) =
+    Elm3d.Vector3.new
+        transform.rotationX
+        transform.rotationY
+        transform.rotationZ
+
+
+toScale : Transform3d -> Vector3
+toScale (Transform3d transform) =
+    transform.scale
 
 
 toRotationX : Transform3d -> Float
@@ -86,3 +119,8 @@ toRotationX (Transform3d transform) =
 toRotationY : Transform3d -> Float
 toRotationY (Transform3d transform) =
     transform.rotationY
+
+
+toRotationZ : Transform3d -> Float
+toRotationZ (Transform3d transform) =
+    transform.rotationZ

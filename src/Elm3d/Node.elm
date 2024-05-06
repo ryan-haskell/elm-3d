@@ -1,29 +1,32 @@
 module Elm3d.Node exposing
     ( Node
     , cube
-    , withPosition, withRotationX
+    , light
+    , withPosition
+    , withRotationX, withRotationY, withRotationZ
     , withTextureColor
     , Context, withOnUpdate
-    , toRotationX
+    , isDirectionalLight
+    , toPosition, toRotation, toScale
+    , toRotationX, toRotationY, toRotationZ
     , toEntity, toUpdateFunction
-    , toRotationY, withRotationY
     )
 
 {-|
 
 @docs Node
 @docs cube
+@docs light
 
-@docs withPosition, withRotationX
+@docs withPosition, withRotation, withScale
+@docs withRotationX, withRotationY, withRotationZ
 @docs withTextureColor
 @docs Context, withOnUpdate
-@docs toRotationX
 
-@docs withTextureColor
+@docs isDirectionalLight
 
-
-### Could be internal
-
+@docs toPosition, toRotation, toScale
+@docs toRotationX, toRotationY, toRotationZ
 @docs toEntity, toUpdateFunction
 
 -}
@@ -45,6 +48,7 @@ type Node
 
 type Mesh
     = Cube { size : Float }
+    | DirectionalLight
 
 
 type alias Internals =
@@ -69,6 +73,18 @@ cube props =
         }
 
 
+light : { direction : Vector3 } -> Node
+light props =
+    Node
+        { mesh = DirectionalLight
+        , texture = TextureColor Elm3d.Vector4.one
+        , onUpdate = Nothing
+        , transform =
+            Elm3d.Transform3d.none
+                |> Elm3d.Transform3d.withRotation props.direction
+        }
+
+
 withPosition : Vector3 -> Node -> Node
 withPosition props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withPosition props node.transform }
@@ -82,6 +98,11 @@ withRotationX props (Node node) =
 withRotationY : Float -> Node -> Node
 withRotationY props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withRotationY props node.transform }
+
+
+withRotationZ : Float -> Node -> Node
+withRotationZ props (Node node) =
+    Node { node | transform = Elm3d.Transform3d.withRotationZ props node.transform }
 
 
 withTextureColor : Color -> Node -> Node
@@ -100,6 +121,35 @@ withOnUpdate props (Node node) =
     Node { node | onUpdate = Just props }
 
 
+
+-- READING
+
+
+isDirectionalLight : Node -> Bool
+isDirectionalLight (Node node) =
+    case node.mesh of
+        DirectionalLight ->
+            True
+
+        _ ->
+            False
+
+
+toPosition : Node -> Vector3
+toPosition (Node node) =
+    Elm3d.Transform3d.toPosition node.transform
+
+
+toRotation : Node -> Vector3
+toRotation (Node node) =
+    Elm3d.Transform3d.toRotation node.transform
+
+
+toScale : Node -> Vector3
+toScale (Node node) =
+    Elm3d.Transform3d.toScale node.transform
+
+
 toRotationX : Node -> Float
 toRotationX (Node node) =
     Elm3d.Transform3d.toRotationX node.transform
@@ -110,16 +160,33 @@ toRotationY (Node node) =
     Elm3d.Transform3d.toRotationY node.transform
 
 
-toEntity : { camera : Matrix4 } -> Node -> WebGL.Entity
-toEntity { camera } ((Node { texture, transform, mesh }) as node) =
+toRotationZ : Node -> Float
+toRotationZ (Node node) =
+    Elm3d.Transform3d.toRotationZ node.transform
+
+
+toEntity :
+    { camera : Matrix4
+    , light : Maybe Vector3
+    }
+    -> Node
+    -> Maybe WebGL.Entity
+toEntity props ((Node { texture, transform, mesh }) as node) =
     case ( mesh, texture ) of
+        ( DirectionalLight, _ ) ->
+            Nothing
+
         ( Cube { size }, TextureColor color ) ->
-            Elm3d.Entities.Cube.TextureColor.toEntity
-                { scale = size
-                , color = color
-                , modelView = Elm3d.Transform3d.toMatrix4 transform
-                , camera = camera
-                }
+            Just <|
+                Elm3d.Entities.Cube.TextureColor.toEntity
+                    { scale = size
+                    , color = color
+                    , modelView = Elm3d.Transform3d.toMatrix4 transform
+                    , camera = props.camera
+                    , lightDirection =
+                        props.light
+                            |> Maybe.withDefault Elm3d.Vector3.zero
+                    }
 
 
 toUpdateFunction : Node -> Maybe (Context -> Node -> Node)

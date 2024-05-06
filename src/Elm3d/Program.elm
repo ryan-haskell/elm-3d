@@ -4,10 +4,11 @@ import Browser
 import Browser.Dom
 import Browser.Events
 import Elm3d.Camera
-import Elm3d.Node
+import Elm3d.Node exposing (Node)
 import Elm3d.Window
 import Html exposing (Html)
 import Html.Attributes
+import List.Extra
 import Task
 import WebGL
 
@@ -20,7 +21,7 @@ type Model
     = Model
         { time : Float
         , window : ( Int, Int )
-        , nodes : List Elm3d.Node.Node
+        , nodes : List Node
         }
 
 
@@ -33,14 +34,14 @@ type Msg
 type alias Props =
     { window : Elm3d.Window.Window
     , camera : Elm3d.Camera.Camera
-    , nodes : List Elm3d.Node.Node
+    , nodes : List Node
     }
 
 
 new :
     { window : Elm3d.Window.Window
     , camera : Elm3d.Camera.Camera
-    , nodes : List Elm3d.Node.Node
+    , nodes : List Node
     }
     -> Program
 new props =
@@ -103,7 +104,7 @@ update msg (Model model) =
             )
 
 
-updateNode : Elm3d.Node.Context -> Elm3d.Node.Node -> Elm3d.Node.Node
+updateNode : Elm3d.Node.Context -> Node -> Node
 updateNode context node =
     case Elm3d.Node.toUpdateFunction node of
         Just fn ->
@@ -131,12 +132,18 @@ view { window, camera } (Model model) =
         ( width, height ) =
             size
 
+        directionalLight : Maybe Node
+        directionalLight =
+            model.nodes
+                |> List.Extra.find Elm3d.Node.isDirectionalLight
+
         viewWebGlCanvas : Html Msg
         viewWebGlCanvas =
             model.nodes
-                |> List.map
+                |> List.filterMap
                     (Elm3d.Node.toEntity
                         { camera = Elm3d.Camera.toMatrix4 size camera
+                        , light = directionalLight |> Maybe.map Elm3d.Node.toRotation
                         }
                     )
                 |> WebGL.toHtmlWith
@@ -147,9 +154,15 @@ view { window, camera } (Model model) =
                     , Html.Attributes.height height
                     ]
     in
-    if window == Elm3d.Window.fullscreen then
+    if Elm3d.Window.isFullscreen window then
         Html.div [ Html.Attributes.class "elm-3d" ]
             [ Html.node "style" [] [ Html.text """body { margin: 0; overflow: hidden; }""" ]
+            , viewWebGlCanvas
+            ]
+
+    else if Elm3d.Window.isFullscreenAspect window then
+        Html.div [ Html.Attributes.class "elm-3d" ]
+            [ Html.node "style" [] [ Html.text """html, body { margin: 0; overflow: hidden; height: 100%; } .elm-3d { height: 100%; display: flex; align-items: center; justify-content: center; }""" ]
             , viewWebGlCanvas
             ]
 
