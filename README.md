@@ -9,7 +9,7 @@ elm install ryan-haskell/elm-3d
 
 ## Quick example
 
-![Rendering 3D Stuff](./example/webgl_obj.mp4)
+![Rendering 3D Stuff](./example/webgl_obj.gif)
 
 ```elm
 module Main exposing (main)
