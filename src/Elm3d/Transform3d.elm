@@ -14,6 +14,8 @@ module Elm3d.Transform3d exposing
 @docs withPosition, withRotation, withScale
 @docs withRotationX, withRotationY, withRotationZ
 
+@docs combine
+
 @docs toPosition, toRotation, toScale
 @docs toRotationX, toRotationY, toRotationZ
 @docs toMatrix4
@@ -23,6 +25,7 @@ module Elm3d.Transform3d exposing
 import Elm3d.Matrix4 exposing (Matrix4)
 import Elm3d.Vector3 exposing (Vector3)
 import Math.Matrix4
+import Math.Vector3
 
 
 type Transform3d
@@ -36,6 +39,28 @@ type alias Internals =
     , rotationZ : Float
     , scale : Vector3
     }
+
+
+
+-- let
+--     combined : Matrix4
+--     combined =
+-- in
+-- Transform3d
+--     { position = Math.Matrix4.
+--     }
+-- TODO: I think this is wrong
+-- Transform3d
+--     { position = Math.Vector3.add parent.position child.position
+--     , rotationX = parent.rotationX + child.rotationX
+--     , rotationY = parent.rotationY + child.rotationY
+--     , rotationZ = parent.rotationZ + child.rotationZ
+--     , scale =
+--         Elm3d.Vector3.new
+--             (Elm3d.Vector3.x parent.scale * Elm3d.Vector3.x child.scale)
+--             (Elm3d.Vector3.y parent.scale * Elm3d.Vector3.y child.scale)
+--             (Elm3d.Vector3.z parent.scale * Elm3d.Vector3.z child.scale)
+--     }
 
 
 none : Transform3d

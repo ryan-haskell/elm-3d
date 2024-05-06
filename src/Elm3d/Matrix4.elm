@@ -1,5 +1,6 @@
 module Elm3d.Matrix4 exposing
     ( Matrix4
+    , identity
     , fromOrthoCamera, fromLookAt
     , withTranslate, withRotate, withScale
     )
@@ -7,7 +8,10 @@ module Elm3d.Matrix4 exposing
 {-|
 
 @docs Matrix4
+
+@docs identity
 @docs fromOrthoCamera, fromLookAt
+
 @docs withTranslate, withRotate, withScale
 
 -}
@@ -18,6 +22,11 @@ import Math.Matrix4
 
 type alias Matrix4 =
     Math.Matrix4.Mat4
+
+
+identity : Matrix4
+identity =
+    Math.Matrix4.identity
 
 
 fromLookAt :

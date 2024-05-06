@@ -1,7 +1,6 @@
 module Main exposing (main)
 
 import Elm3d.Camera exposing (Camera)
-import Elm3d.Color
 import Elm3d.Node exposing (Node)
 import Elm3d.Program exposing (Program)
 import Elm3d.Vector3
@@ -13,9 +12,8 @@ main =
     Elm3d.Program.new
         { window = Elm3d.Window.fullscreenAspect (16 / 9)
         , nodes =
-            [ blueCube
-            , purpleCube
-            , directionalLight
+            [ directionalLight
+            , buildings
             ]
         , camera =
             Elm3d.Camera.perspective
@@ -34,43 +32,32 @@ directionalLight =
         }
 
 
-purpleCube : Node
-purpleCube =
-    Elm3d.Node.cube { size = 1 }
-        |> Elm3d.Node.withPosition (Elm3d.Vector3.new -1.0 0 0)
-        |> Elm3d.Node.withRotationX (pi / 4)
-        |> Elm3d.Node.withRotationY (pi / 4)
-        |> Elm3d.Node.withTextureColor (Elm3d.Color.rgb 0.5 0 1)
+buildings : Node
+buildings =
+    Elm3d.Node.group
+        [ tavern
+        , church
+        ]
+        |> Elm3d.Node.withOnUpdate rotateEveryFrame
 
 
-blueCube : Node
-blueCube =
-    Elm3d.Node.cube { size = 1 }
-        |> Elm3d.Node.withPosition (Elm3d.Vector3.new 1.0 0 0)
-        |> Elm3d.Node.withRotationX (pi / 4)
-        |> Elm3d.Node.withTextureColor (Elm3d.Color.rgb 0 0.3 0.9)
-        |> Elm3d.Node.withOnUpdate onBlueCubeUpdate
+tavern =
+    Elm3d.Node.obj
+        { url = "http://localhost:3000/medieval_hexagon/building_tavern_blue.obj"
+        }
+        |> Elm3d.Node.withPosition (Elm3d.Vector3.new 0.75 -0.5 0)
+        |> Elm3d.Node.withRotationY (-pi / 8)
 
 
-onBlueCubeUpdate : Elm3d.Node.Context -> Node -> Node
-onBlueCubeUpdate { time } node =
-    let
-        speed : Float
-        speed =
-            0.001
+church =
+    Elm3d.Node.obj
+        { url = "http://localhost:3000/medieval_hexagon/building_church_blue.obj"
+        }
+        |> Elm3d.Node.withPosition (Elm3d.Vector3.new -0.75 -0.5 0)
+        |> Elm3d.Node.withRotationY (pi / 8)
 
-        radius : Float
-        radius =
-            2
-    in
+
+rotateEveryFrame : Elm3d.Node.Context -> Node -> Node
+rotateEveryFrame { dt } node =
     node
-        |> Elm3d.Node.withRotationY (Elm3d.Node.toRotationY node + speed * 8.0)
-
-
-
--- |> Elm3d.Node.withPosition
---     (Elm3d.Vector3.new
---         (cos (time * speed * 1.0))
---         (sin (time * speed * 1.0))
---         -1
---     )
+        |> Elm3d.Node.rotateY (dt * 0.5)

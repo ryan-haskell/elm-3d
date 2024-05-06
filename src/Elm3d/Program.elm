@@ -3,7 +3,10 @@ module Elm3d.Program exposing (Program, new)
 import Browser
 import Browser.Dom
 import Browser.Events
+import Elm3d.Asset
 import Elm3d.Camera
+import Elm3d.Input
+import Elm3d.Matrix4
 import Elm3d.Node exposing (Node)
 import Elm3d.Window
 import Html exposing (Html)
@@ -22,13 +25,9 @@ type Model
         { time : Float
         , window : ( Int, Int )
         , nodes : List Node
+        , input : Elm3d.Input.Model
+        , assets : Elm3d.Asset.Model
         }
-
-
-type Msg
-    = Frame Float
-    | Viewport Browser.Dom.Viewport
-    | Resize Int Int
 
 
 type alias Props =
@@ -55,21 +54,62 @@ new props =
 
 init : Props -> () -> ( Model, Cmd Msg )
 init { nodes } _ =
+    let
+        objFileUrls : List String
+        objFileUrls =
+            List.concatMap Elm3d.Node.toObjFileUrls nodes
+
+        ( assets, assetCmd ) =
+            Elm3d.Asset.init { objFileUrls = objFileUrls }
+    in
     ( Model
         { time = 0.0
         , window = ( 0, 0 )
         , nodes = nodes
+        , input = Elm3d.Input.init
+        , assets = assets
         }
-    , Browser.Dom.getViewport
-        |> Task.perform Viewport
+    , Cmd.batch
+        [ Browser.Dom.getViewport
+            |> Task.perform Viewport
+        , Cmd.map Asset assetCmd
+        ]
     )
+
+
+
+-- UPDATE
+
+
+type Msg
+    = Frame Float
+    | Viewport Browser.Dom.Viewport
+    | Resize Int Int
+    | Input Elm3d.Input.RawEvent
+    | Asset Elm3d.Asset.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model model) =
     case msg of
-        Frame dt ->
+        Asset assetsMsg ->
             let
+                ( assets, assetsCmd ) =
+                    -- TODO: Consider dynamic model.nodes here
+                    -- to fetch objs not loaded at startup
+                    Elm3d.Asset.update assetsMsg model.assets
+            in
+            ( Model { model | assets = assets }
+            , Cmd.map Asset assetsCmd
+            )
+
+        Frame ms ->
+            let
+                dt : Float
+                dt =
+                    ms / 1000
+
+                time : Float
                 time =
                     model.time + dt
 
@@ -103,6 +143,20 @@ update msg (Model model) =
             , Cmd.none
             )
 
+        Input event ->
+            let
+                ( input, maybeEvent ) =
+                    Elm3d.Input.update
+                        { event = event }
+                        model.input
+
+                _ =
+                    Debug.log "input" event
+            in
+            ( Model { model | input = input }
+            , Cmd.none
+            )
+
 
 updateNode : Elm3d.Node.Context -> Node -> Node
 updateNode context node =
@@ -119,6 +173,7 @@ subscriptions model =
     Sub.batch
         [ Browser.Events.onAnimationFrameDelta Frame
         , Browser.Events.onResize Resize
+        , Elm3d.Input.subscriptions Input
         ]
 
 
@@ -140,14 +195,16 @@ view { window, camera } (Model model) =
         viewWebGlCanvas : Html Msg
         viewWebGlCanvas =
             model.nodes
-                |> List.filterMap
-                    (Elm3d.Node.toEntity
+                |> List.concatMap
+                    (Elm3d.Node.toEntity Elm3d.Matrix4.identity
                         { camera = Elm3d.Camera.toMatrix4 size camera
                         , light = directionalLight |> Maybe.map Elm3d.Node.toRotation
+                        , assets = model.assets
                         }
                     )
                 |> WebGL.toHtmlWith
                     [ WebGL.alpha True
+                    , WebGL.antialias
                     , WebGL.depth 1
                     ]
                     [ Html.Attributes.width width
