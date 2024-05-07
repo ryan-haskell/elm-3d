@@ -9,7 +9,9 @@ elm install ryan-haskell/elm-3d
 
 ## Quick example
 
-![Rendering 3D Stuff](./example/webgl_obj.gif)
+
+<img align="center" src="./example/webgl_obj_mtl.gif" />
+
 
 ```elm
 module Main exposing (main)
@@ -25,54 +27,46 @@ main : Program
 main =
     Elm3d.Program.new
         { window = Elm3d.Window.fullscreenAspect (16 / 9)
-        , nodes =
-            [ light
-            , buildings
-            ]
-        , camera = camera
-        }
-
-camera : Camera
-camera =
-    Elm3d.Camera.perspective
-        { fov = 60
-        , near = 0.01
-        , far = 1000
-        }
-        |> Elm3d.Camera.withPosition (Elm3d.Vector3.new 0 0 4)
-
-light : Node
-light =
-    Elm3d.Node.light
-        { direction = Elm3d.Vector3.new 1 1 1
+        , camera =
+            Elm3d.Camera.perspective
+                { fov = 60
+                , near = 0.01
+                , far = 1000
+                }
+                |> Elm3d.Camera.withPosition (Elm3d.Vector3.new 0 0 4)
+        , nodes = [ buildings ]
         }
 
 
 buildings : Node
 buildings =
-    Elm3d.Node.group [ tavern, church ]
+    Elm3d.Node.group
+        [ tavern
+        , church
+        ]
+        |> Elm3d.Node.withPositionY -0.5
         |> Elm3d.Node.withOnUpdate rotateEveryFrame
 
 
 tavern : Node
 tavern =
     Elm3d.Node.obj
-        { url = "/assets/medieval_hexagon/building_tavern_blue.obj"
+        { url = "http://localhost:3000/medieval_hexagon/building_tavern_blue.obj"
         }
-        |> Elm3d.Node.withPosition (Elm3d.Vector3.new 1.0 -0.5 0)
+        |> Elm3d.Node.withPositionX 0.75
 
 
-church : Church
+church : Node
 church =
     Elm3d.Node.obj
-        { url = "/assets/medieval_hexagon/building_church_blue.obj"
+        { url = "http://localhost:3000/medieval_hexagon/building_church_blue.obj"
         }
-        |> Elm3d.Node.withPosition (Elm3d.Vector3.new -1.0 -0.5 0)
+        |> Elm3d.Node.withPositionX -0.75
 
 
 rotateEveryFrame : Elm3d.Node.Context -> Node -> Node
 rotateEveryFrame { dt } node =
     node
-        |> Elm3d.Node.rotateY dt
+        |> Elm3d.Node.rotateY (dt * 0.5)
 
 ```

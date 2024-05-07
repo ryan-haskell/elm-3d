@@ -13,7 +13,6 @@ import WebGL
 
 type alias Data =
     { url : String
-    , mtlDependencies : List String
     , info : Info
     }
 
@@ -23,6 +22,7 @@ type alias Info =
     , normals : Array NormalVertex
     , textures : Array TextureVertex
     , faces : List Face
+    , mtl : List String
     }
 
 
@@ -45,7 +45,6 @@ type Error
 parse : String -> String -> Data
 parse url raw =
     { url = url
-    , mtlDependencies = []
     , info = parseInfo (String.lines raw)
     }
 
@@ -54,7 +53,7 @@ parseInfo : List String -> Info
 parseInfo lines =
     let
         info =
-            parseInfoHelp lines (Info Array.empty Array.empty Array.empty [])
+            parseInfoHelp lines (Info Array.empty Array.empty Array.empty [] [])
     in
     { info | faces = List.reverse info.faces }
 
@@ -66,7 +65,11 @@ parseInfoHelp lines info =
             info
 
         line :: rest ->
-            if String.startsWith "v " line then
+            if String.startsWith "mtllib " line then
+                parseInfoHelp rest
+                    { info | mtl = String.dropLeft 7 line :: info.mtl }
+
+            else if String.startsWith "v " line then
                 parseInfoHelp rest
                     { info
                         | vertices =
@@ -100,6 +103,24 @@ parseInfoHelp lines info =
 
                                 _ ->
                                     info.normals
+                    }
+
+            else if String.startsWith "vt " line then
+                parseInfoHelp rest
+                    { info
+                        | textures =
+                            case
+                                line
+                                    |> String.dropLeft 3
+                                    |> String.words
+                                    |> List.filterMap String.toFloat
+                            of
+                                u :: v :: _ ->
+                                    info.textures
+                                        |> Array.push (Math.Vector2.vec2 u v)
+
+                                _ ->
+                                    info.textures
                     }
 
             else if String.startsWith "f " line then
@@ -253,6 +274,7 @@ decrement ( a, b, c ) =
 type alias Attributes =
     { position : Elm3d.Vector3.Vector3
     , normal : Elm3d.Vector3.Vector3
+    , uv : Math.Vector2.Vec2
     }
 
 
@@ -344,9 +366,9 @@ addFaceData info face mesh =
         Face_VT3 ( v1, v2, v3 ) ( t1, t2, t3 ) ->
             { attributes =
                 Maybe.map3 (add3ToAttributes mesh)
-                    (fromV v1 info)
-                    (fromV v2 info)
-                    (fromV v3 info)
+                    (fromVT v1 t1 info)
+                    (fromVT v2 t2 info)
+                    (fromVT v3 t3 info)
                     |> Maybe.withDefault mesh.attributes
             , indices =
                 mesh.indices
@@ -356,10 +378,10 @@ addFaceData info face mesh =
         Face_VT4 ( v1, v2, v3 ) v4 ( t1, t2, t3 ) t4 ->
             { attributes =
                 Maybe.map4 (add4ToAttributes mesh)
-                    (fromV v1 info)
-                    (fromV v2 info)
-                    (fromV v3 info)
-                    (fromV v4 info)
+                    (fromVT v1 t1 info)
+                    (fromVT v2 t2 info)
+                    (fromVT v3 t3 info)
+                    (fromVT v4 t4 info)
                     |> Maybe.withDefault mesh.attributes
             , indices =
                 mesh.indices
@@ -367,25 +389,25 @@ addFaceData info face mesh =
                     |> Array.push ( offset, offset + 2, offset + 3 )
             }
 
-        Face_VTN3 ( v1, v2, v3 ) _ ( n1, n2, n3 ) ->
+        Face_VTN3 ( v1, v2, v3 ) ( t1, t2, t3 ) ( n1, n2, n3 ) ->
             { attributes =
                 Maybe.map3 (add3ToAttributes mesh)
-                    (fromVN v1 n1 info)
-                    (fromVN v2 n2 info)
-                    (fromVN v3 n3 info)
+                    (fromVTN v1 t1 n1 info)
+                    (fromVTN v2 t2 n2 info)
+                    (fromVTN v3 t3 n3 info)
                     |> Maybe.withDefault mesh.attributes
             , indices =
                 mesh.indices
                     |> Array.push ( offset, offset + 1, offset + 2 )
             }
 
-        Face_VTN4 ( v1, v2, v3 ) v4 _ _ ( n1, n2, n3 ) n4 ->
+        Face_VTN4 ( v1, v2, v3 ) v4 ( t1, t2, t3 ) t4 ( n1, n2, n3 ) n4 ->
             { attributes =
                 Maybe.map4 (add4ToAttributes mesh)
-                    (fromVN v1 n1 info)
-                    (fromVN v2 n2 info)
-                    (fromVN v3 n3 info)
-                    (fromVN v4 n4 info)
+                    (fromVTN v1 t1 n1 info)
+                    (fromVTN v2 t2 n2 info)
+                    (fromVTN v3 t3 n3 info)
+                    (fromVTN v4 t4 n4 info)
                     |> Maybe.withDefault mesh.attributes
             , indices =
                 mesh.indices
@@ -415,7 +437,7 @@ fromV : Int -> Info -> Maybe Attributes
 fromV index { vertices } =
     case Array.get (index - 1) vertices of
         Just vec3 ->
-            Just { position = vec3, normal = vec3 }
+            Just { position = vec3, normal = vec3, uv = Math.Vector2.vec2 0 0 }
 
         Nothing ->
             Nothing
@@ -425,7 +447,27 @@ fromVN : Int -> Int -> Info -> Maybe Attributes
 fromVN vi ni { vertices, normals } =
     case ( Array.get (vi - 1) vertices, Array.get (ni - 1) normals ) of
         ( Just v, Just n ) ->
-            Just { position = v, normal = n }
+            Just { position = v, normal = n, uv = Math.Vector2.vec2 0 0 }
+
+        _ ->
+            Nothing
+
+
+fromVT : Int -> Int -> Info -> Maybe Attributes
+fromVT vi ti { vertices, textures } =
+    case ( Array.get (vi - 1) vertices, Array.get (ti - 1) textures ) of
+        ( Just v, Just t ) ->
+            Just { position = v, normal = v, uv = t }
+
+        _ ->
+            Nothing
+
+
+fromVTN : Int -> Int -> Int -> Info -> Maybe Attributes
+fromVTN vi ti ni { vertices, normals, textures } =
+    case ( Array.get (vi - 1) vertices, Array.get (ti - 1) textures, Array.get (ni - 1) normals ) of
+        ( Just v, Just t, Just n ) ->
+            Just { position = v, normal = n, uv = t }
 
         _ ->
             Nothing

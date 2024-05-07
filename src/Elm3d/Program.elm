@@ -143,17 +143,23 @@ update msg (Model model) =
             , Cmd.none
             )
 
-        Input event ->
+        Input internalEvent ->
             let
                 ( input, maybeEvent ) =
                     Elm3d.Input.update
-                        { event = event }
+                        { event = internalEvent }
                         model.input
 
-                _ =
-                    Debug.log "input" event
+                newNodes : List Node
+                newNodes =
+                    case maybeEvent of
+                        Just event ->
+                            List.map (Elm3d.Node.onInput event) model.nodes
+
+                        Nothing ->
+                            model.nodes
             in
-            ( Model { model | input = input }
+            ( Model { model | input = input, nodes = newNodes }
             , Cmd.none
             )
 
@@ -171,10 +177,19 @@ updateNode context node =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Browser.Events.onAnimationFrameDelta Frame
+        [ if hasAnyUpdateNodes model then
+            Browser.Events.onAnimationFrameDelta Frame
+
+          else
+            Sub.none
         , Browser.Events.onResize Resize
         , Elm3d.Input.subscriptions Input
         ]
+
+
+hasAnyUpdateNodes : Model -> Bool
+hasAnyUpdateNodes (Model model) =
+    List.any Elm3d.Node.hasUpdateFunction model.nodes
 
 
 view : Props -> Model -> Html Msg

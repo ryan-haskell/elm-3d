@@ -2,6 +2,7 @@ module Elm3d.Node exposing
     ( Node
     , cube, obj, light, group
     , withPosition, withRotation, withScale
+    , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
     , Context, withOnUpdate
     , rotateX, rotateY, rotateZ
@@ -9,6 +10,8 @@ module Elm3d.Node exposing
     , toPosition, toRotation, toScale
     , toRotationX, toRotationY, toRotationZ
     , toEntity, toUpdateFunction, toObjFileUrls
+    , onInput
+    , hasUpdateFunction
     )
 
 {-|
@@ -17,6 +20,7 @@ module Elm3d.Node exposing
 @docs cube, obj, light, group
 
 @docs withPosition, withRotation, withScale
+@docs withPositionX, withPositionY, withPositionZ
 @docs withRotationX, withRotationY, withRotationZ
 
 @docs Context, withOnUpdate
@@ -28,6 +32,7 @@ module Elm3d.Node exposing
 @docs toPosition, toRotation, toScale
 @docs toRotationX, toRotationY, toRotationZ
 @docs toEntity, toUpdateFunction, toObjFileUrls
+@docs onInput
 
 -}
 
@@ -160,6 +165,21 @@ rotateZ delta (Node node) =
         }
 
 
+withPositionX : Float -> Node -> Node
+withPositionX props (Node node) =
+    Node { node | transform = Elm3d.Transform3d.withPositionX props node.transform }
+
+
+withPositionY : Float -> Node -> Node
+withPositionY props (Node node) =
+    Node { node | transform = Elm3d.Transform3d.withPositionY props node.transform }
+
+
+withPositionZ : Float -> Node -> Node
+withPositionZ props (Node node) =
+    Node { node | transform = Elm3d.Transform3d.withPositionZ props node.transform }
+
+
 withRotationX : Float -> Node -> Node
 withRotationX props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withRotationX props node.transform }
@@ -253,9 +273,13 @@ toEntity groupMatrix props ((Node { transform, mesh }) as node) =
                 children
 
         Obj { url } ->
-            case Elm3d.Asset.findObj url props.assets of
-                Just data ->
-                    [ Elm3d.Entities.Obj.toEntity data
+            case
+                ( Elm3d.Asset.findObj url props.assets
+                , Elm3d.Asset.findPng "http://localhost:3000/medieval_hexagon/hexagons_medieval.png" props.assets
+                )
+            of
+                ( Just obj_, Just png_ ) ->
+                    [ Elm3d.Entities.Obj.toEntity obj_
                         { modelView =
                             Math.Matrix4.mul groupMatrix
                                 (Elm3d.Transform3d.toMatrix4 transform)
@@ -263,10 +287,11 @@ toEntity groupMatrix props ((Node { transform, mesh }) as node) =
                         , lightDirection =
                             props.light
                                 |> Maybe.withDefault Elm3d.Vector3.zero
+                        , texture = png_
                         }
                     ]
 
-                Nothing ->
+                _ ->
                     []
 
         Cube { size, texture } ->
@@ -299,11 +324,41 @@ toObjFileUrls (Node node) =
             []
 
 
+onInput : Elm3d.Input.Event -> Node -> Node
+onInput event (Node node) =
+    case node.mesh of
+        Group children ->
+            let
+                updatedGroupNode : Node
+                updatedGroupNode =
+                    Node { node | mesh = Group (List.map (onInput event) children) }
+            in
+            case node.onInput of
+                Just fn ->
+                    fn event updatedGroupNode
+
+                Nothing ->
+                    updatedGroupNode
+
+        _ ->
+            case node.onInput of
+                Just fn ->
+                    fn event (Node node)
+
+                Nothing ->
+                    Node node
+
+
+hasUpdateFunction : Node -> Bool
+hasUpdateFunction node =
+    toUpdateFunction node /= Nothing
+
+
 toUpdateFunction : Node -> Maybe (Context -> Node -> Node)
 toUpdateFunction (Node node) =
     case node.mesh of
         Group children ->
-            if hasUpdateFunction (Node node) || List.any hasUpdateFunction children then
+            if nodeHasUpdateFunction (Node node) || List.any nodeHasUpdateFunction children then
                 Just
                     (\context _ ->
                         case node.onUpdate of
@@ -325,8 +380,8 @@ toUpdateFunction (Node node) =
             node.onUpdate
 
 
-hasUpdateFunction : Node -> Bool
-hasUpdateFunction (Node node) =
+nodeHasUpdateFunction : Node -> Bool
+nodeHasUpdateFunction (Node node) =
     node.onUpdate /= Nothing
 
 

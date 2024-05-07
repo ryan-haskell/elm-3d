@@ -11,10 +11,6 @@ main : Program
 main =
     Elm3d.Program.new
         { window = Elm3d.Window.fullscreenAspect (16 / 9)
-        , nodes =
-            [ directionalLight
-            , buildings
-            ]
         , camera =
             Elm3d.Camera.perspective
                 { fov = 60
@@ -22,13 +18,7 @@ main =
                 , far = 1000
                 }
                 |> Elm3d.Camera.withPosition (Elm3d.Vector3.new 0 0 4)
-        }
-
-
-directionalLight : Node
-directionalLight =
-    Elm3d.Node.light
-        { direction = Elm3d.Vector3.new 1 1 1
+        , nodes = [ buildings ]
         }
 
 
@@ -38,23 +28,24 @@ buildings =
         [ tavern
         , church
         ]
+        |> Elm3d.Node.withPositionY -0.5
         |> Elm3d.Node.withOnUpdate rotateEveryFrame
 
 
+tavern : Node
 tavern =
     Elm3d.Node.obj
         { url = "http://localhost:3000/medieval_hexagon/building_tavern_blue.obj"
         }
-        |> Elm3d.Node.withPosition (Elm3d.Vector3.new 0.75 -0.5 0)
-        |> Elm3d.Node.withRotationY (-pi / 8)
+        |> Elm3d.Node.withPositionX 0.75
 
 
+church : Node
 church =
     Elm3d.Node.obj
         { url = "http://localhost:3000/medieval_hexagon/building_church_blue.obj"
         }
-        |> Elm3d.Node.withPosition (Elm3d.Vector3.new -0.75 -0.5 0)
-        |> Elm3d.Node.withRotationY (pi / 8)
+        |> Elm3d.Node.withPositionX -0.75
 
 
 rotateEveryFrame : Elm3d.Node.Context -> Node -> Node

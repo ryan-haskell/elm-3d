@@ -1,6 +1,7 @@
 module Elm3d.Transform3d exposing
     ( Transform3d, none
     , withPosition, withRotation, withScale
+    , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
     , toPosition, toRotation, toScale
     , toRotationX, toRotationY, toRotationZ
@@ -12,6 +13,7 @@ module Elm3d.Transform3d exposing
 @docs Transform3d, none
 
 @docs withPosition, withRotation, withScale
+@docs withPositionX, withPositionY, withPositionZ
 @docs withRotationX, withRotationY, withRotationZ
 
 @docs combine
@@ -107,6 +109,21 @@ withRotationY props (Transform3d transform) =
 withRotationZ : Float -> Transform3d -> Transform3d
 withRotationZ props (Transform3d transform) =
     Transform3d { transform | rotationZ = props }
+
+
+withPositionX : Float -> Transform3d -> Transform3d
+withPositionX props (Transform3d transform) =
+    Transform3d { transform | position = Math.Vector3.setX props transform.position }
+
+
+withPositionY : Float -> Transform3d -> Transform3d
+withPositionY props (Transform3d transform) =
+    Transform3d { transform | position = Math.Vector3.setY props transform.position }
+
+
+withPositionZ : Float -> Transform3d -> Transform3d
+withPositionZ props (Transform3d transform) =
+    Transform3d { transform | position = Math.Vector3.setZ props transform.position }
 
 
 toMatrix4 : Transform3d -> Matrix4
