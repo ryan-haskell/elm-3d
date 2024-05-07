@@ -6,6 +6,7 @@ module Elm3d.File.Obj exposing
     )
 
 import Array exposing (Array)
+import Elm3d.Url
 import Elm3d.Vector3
 import Math.Vector2
 import WebGL
@@ -45,17 +46,20 @@ type Error
 parse : String -> String -> Data
 parse url raw =
     { url = url
-    , info = parseInfo (String.lines raw)
+    , info = parseInfo url (String.lines raw)
     }
 
 
-parseInfo : List String -> Info
-parseInfo lines =
+parseInfo : String -> List String -> Info
+parseInfo url lines =
     let
         info =
             parseInfoHelp lines (Info Array.empty Array.empty Array.empty [] [])
     in
-    { info | faces = List.reverse info.faces }
+    { info
+        | mtl = List.map (Elm3d.Url.fromRelativePath url) info.mtl
+        , faces = List.reverse info.faces
+    }
 
 
 parseInfoHelp : List String -> Info -> Info

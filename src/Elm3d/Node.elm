@@ -41,7 +41,7 @@ import Elm3d.Camera exposing (Camera)
 import Elm3d.Color exposing (Color)
 import Elm3d.Entities.Cube.TextureColor
 import Elm3d.Entities.Obj
-import Elm3d.Input
+import Elm3d.Input.Event
 import Elm3d.Matrix4 exposing (Matrix4)
 import Elm3d.Texture exposing (Texture)
 import Elm3d.Transform3d exposing (Transform3d)
@@ -50,6 +50,7 @@ import Elm3d.Vector4 exposing (Vector4)
 import Math.Matrix4
 import WebGL
 import WebGL.Settings.DepthTest
+import WebGL.Texture
 
 
 type Node
@@ -66,7 +67,7 @@ type Mesh
 type alias Internals =
     { mesh : Mesh
     , transform : Transform3d
-    , onInput : Maybe (Elm3d.Input.Event -> Node -> Node)
+    , onInput : Maybe (Elm3d.Input.Event.Event -> Node -> Node)
     , onUpdate : Maybe (Context -> Node -> Node)
     }
 
@@ -273,25 +274,34 @@ toEntity groupMatrix props ((Node { transform, mesh }) as node) =
                 children
 
         Obj { url } ->
-            case
-                ( Elm3d.Asset.findObj url props.assets
-                , Elm3d.Asset.findPng "http://localhost:3000/medieval_hexagon/hexagons_medieval.png" props.assets
-                )
-            of
-                ( Just obj_, Just png_ ) ->
-                    [ Elm3d.Entities.Obj.toEntity obj_
-                        { modelView =
-                            Math.Matrix4.mul groupMatrix
-                                (Elm3d.Transform3d.toMatrix4 transform)
-                        , camera = props.camera
-                        , lightDirection =
-                            props.light
-                                |> Maybe.withDefault Elm3d.Vector3.zero
-                        , texture = png_
-                        }
-                    ]
+            case Elm3d.Asset.findObj url props.assets of
+                Just obj_ ->
+                    case Elm3d.Entities.Obj.findTextures obj_ props.assets of
+                        Nothing ->
+                            []
 
-                _ ->
+                        Just [] ->
+                            [ Elm3d.Entities.Obj.toEntityT0 obj_
+                                { modelView = Math.Matrix4.mul groupMatrix (Elm3d.Transform3d.toMatrix4 transform)
+                                , camera = props.camera
+                                , lightDirection = props.light |> Maybe.withDefault Elm3d.Vector3.zero
+                                }
+                            ]
+
+                        Just (t1 :: []) ->
+                            [ Elm3d.Entities.Obj.toEntityT1 obj_
+                                { modelView = Math.Matrix4.mul groupMatrix (Elm3d.Transform3d.toMatrix4 transform)
+                                , camera = props.camera
+                                , lightDirection = props.light |> Maybe.withDefault Elm3d.Vector3.zero
+                                , texture = t1
+                                }
+                            ]
+
+                        _ ->
+                            -- TODO
+                            []
+
+                Nothing ->
                     []
 
         Cube { size, texture } ->
@@ -324,7 +334,7 @@ toObjFileUrls (Node node) =
             []
 
 
-onInput : Elm3d.Input.Event -> Node -> Node
+onInput : Elm3d.Input.Event.Event -> Node -> Node
 onInput event (Node node) =
     case node.mesh of
         Group children ->

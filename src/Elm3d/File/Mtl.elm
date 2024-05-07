@@ -4,6 +4,7 @@ module Elm3d.File.Mtl exposing
     )
 
 import Dict exposing (Dict)
+import Elm3d.Url
 import Elm3d.Vector3 exposing (Vector3)
 
 
@@ -45,9 +46,20 @@ parse url raw =
     { url = url
     , materials =
         List.foldl updateMaterials
-            { current = "???", materials = Dict.empty }
+            { current = "???"
+            , materials = Dict.empty
+            }
             (String.lines raw)
             |> .materials
+            |> Dict.map
+                (\_ material ->
+                    { material
+                        | map_Kd =
+                            Maybe.map
+                                (Elm3d.Url.fromRelativePath url)
+                                material.map_Kd
+                    }
+                )
     }
 
 

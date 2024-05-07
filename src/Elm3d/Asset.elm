@@ -6,6 +6,7 @@ module Elm3d.Asset exposing
     , findObj
     , findPng
     , init
+    , isLoading
     , update
     )
 
@@ -122,10 +123,14 @@ update msg (Model model) =
                     objFile.info.mtl
                         |> Set.fromList
                         |> Set.toList
-                        |> List.map (toUrlPath url)
-                        |> Debug.log "mtl"
             in
-            ( Model { model | dict = Dict.insert url (Obj (Success objFile)) model.dict }
+            ( Model
+                { model
+                    | dict =
+                        mtlUrls
+                            |> List.foldl (\k -> Dict.insert k (Mtl Loading))
+                                (Dict.insert url (Obj (Success objFile)) model.dict)
+                }
             , Cmd.batch (List.map (fetchMtlFile (Model model)) mtlUrls)
             )
 
@@ -147,9 +152,16 @@ update msg (Model model) =
                         |> List.filter (String.endsWith ".png")
                         |> Set.fromList
                         |> Set.toList
-                        |> List.map (toUrlPath url)
             in
-            ( Model { model | dict = Dict.insert url (Mtl (Success mtlFile)) model.dict }
+            ( Model
+                { model
+                    | dict =
+                        pngTextureUrls
+                            |> List.foldl (\k -> Dict.insert k (Png Loading))
+                                (model.dict
+                                    |> Dict.insert url (Mtl (Success mtlFile))
+                                )
+                }
             , Cmd.batch (List.map (fetchPngTexture (Model model)) pngTextureUrls)
             )
 
@@ -167,40 +179,6 @@ update msg (Model model) =
             ( Model { model | dict = Dict.insert url (Png (Failure (Texture textureError))) model.dict }
             , Cmd.none
             )
-
-
-toUrlPath : String -> String -> String
-toUrlPath reqUrl relative =
-    let
-        appendToUrlPath : Url -> String
-        appendToUrlPath url =
-            let
-                hostname =
-                    if String.startsWith "http" reqUrl then
-                        Url.toString
-                            { url
-                                | path = ""
-                                , query = Nothing
-                                , fragment = Nothing
-                            }
-
-                    else
-                        ""
-            in
-            url.path
-                |> String.split "/"
-                |> List.reverse
-                |> List.drop 1
-                |> (::) relative
-                |> List.reverse
-                |> String.join "/"
-                |> String.append hostname
-    in
-    Url.fromString reqUrl
-        |> Maybe.map Just
-        |> Maybe.withDefault (Url.fromString ("http://localhost:1234" ++ reqUrl))
-        |> Maybe.map appendToUrlPath
-        |> Maybe.withDefault relative
 
 
 
@@ -235,3 +213,19 @@ findPng url (Model { dict }) =
 
         _ ->
             Nothing
+
+
+isLoading : String -> Model -> Bool
+isLoading url (Model { dict }) =
+    case Dict.get url dict of
+        Nothing ->
+            False
+
+        Just (Obj loadable) ->
+            loadable == Loading
+
+        Just (Mtl loadable) ->
+            loadable == Loading
+
+        Just (Png loadable) ->
+            loadable == Loading

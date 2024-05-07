@@ -1,12 +1,20 @@
 module Elm3d.Input.Key exposing
     ( Key(..)
-    , fromCode
-    , toCode
+    , fromCode, toCode
     )
+
+{-|
+
+@docs Key
+@docs fromCode, toCode
+
+-}
 
 import Dict exposing (Dict)
 
 
+{-| Represents a key on your keyboard
+-}
 type Key
     = KEY_BACKSPACE
     | KEY_TAB
@@ -111,6 +119,13 @@ type Key
     | KEY_SINGLE_QUOTE
 
 
+{-| Convert a `Key` to it's character code.
+
+    toCode KEY_ENTER == 13
+
+    toCode KEY_ARROW_DOWN == 40
+
+-}
 toCode : Key -> Int
 toCode key =
     case key of
@@ -418,6 +433,15 @@ toCode key =
             222
 
 
+{-| Get a `Key` from its character code.
+
+    toCode 13 == Just KEY_ENTER
+
+    toCode 40 == Just KEY_ARROW_DOWN
+
+    toCode 420 == Nothing
+
+-}
 fromCode : Int -> Maybe Key
 fromCode int =
     case int of

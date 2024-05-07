@@ -1,6 +1,5 @@
 module Elm3d.Input exposing
-    ( Event
-    , Model
+    ( Model
     , RawEvent
     , init
     , subscriptions
@@ -8,15 +7,15 @@ module Elm3d.Input exposing
     )
 
 import Browser.Events
+import Elm3d.Input.Event exposing (Event(..))
 import Elm3d.Input.Key exposing (Key)
 import Json.Decode
 import Set exposing (Set)
 import Task
 
 
-type Event
-    = KeyPressed Key
-    | KeyReleased Key
+type alias Event =
+    Elm3d.Input.Event.Event
 
 
 type RawEvent

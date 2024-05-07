@@ -35,7 +35,7 @@ buildings =
 tavern : Node
 tavern =
     Elm3d.Node.obj
-        { url = "http://localhost:3000/medieval_hexagon/building_tavern_blue.obj"
+        { url = "/assets/medieval_hexagon/building_tavern_blue.obj"
         }
         |> Elm3d.Node.withPositionX 0.75
 
@@ -43,7 +43,7 @@ tavern =
 church : Node
 church =
     Elm3d.Node.obj
-        { url = "http://localhost:3000/medieval_hexagon/building_church_blue.obj"
+        { url = "/assets/medieval_hexagon/building_church_blue.obj"
         }
         |> Elm3d.Node.withPositionX -0.75
 

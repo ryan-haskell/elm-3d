@@ -16,6 +16,7 @@ module Elm3d.Window exposing
 -}
 
 
+{-| -}
 type Window
     = Fullscreen
     | FullscreenAspect Float
