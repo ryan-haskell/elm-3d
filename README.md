@@ -9,8 +9,9 @@ elm install ryan-haskell/elm-3d
 
 ## Quick example
 
-
-<img align="center" src="./example/webgl_obj_mtl.gif" />
+<p align="center">
+  <img width="800" height="auto" src="./example/webgl_obj_mtl.gif" />
+</p>
 
 
 ```elm
