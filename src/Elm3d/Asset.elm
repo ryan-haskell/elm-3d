@@ -3,6 +3,7 @@ module Elm3d.Asset exposing
     , Model
     , Msg
     , findMtl
+    , findMtlKd
     , findObj
     , findPng
     , init
@@ -13,6 +14,7 @@ module Elm3d.Asset exposing
 import Dict exposing (Dict)
 import Elm3d.File.Mtl
 import Elm3d.File.Obj
+import Elm3d.Vector3 exposing (Vector3)
 import Http
 import Set
 import Task
@@ -229,3 +231,30 @@ isLoading url (Model { dict }) =
 
         Just (Png loadable) ->
             loadable == Loading
+
+
+findMtlKd : Elm3d.File.Obj.Data -> String -> String -> Model -> Vector3
+findMtlKd obj libName mtlName assets =
+    let
+        (Model { dict }) =
+            assets
+
+        dir : String
+        dir =
+            String.split "/" obj.url
+                |> List.reverse
+                |> List.drop 1
+                |> List.reverse
+                |> String.join "/"
+
+        libUrl : String
+        libUrl =
+            dir ++ "/" ++ libName
+
+        getKdForMtl : Elm3d.File.Mtl.Data -> Maybe Vector3
+        getKdForMtl mtl =
+            Elm3d.File.Mtl.toKd mtlName mtl
+    in
+    findMtl libUrl assets
+        |> Maybe.andThen getKdForMtl
+        |> Maybe.withDefault Elm3d.Vector3.one

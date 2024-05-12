@@ -62,15 +62,13 @@ findTextures obj assets =
 
 
 type alias Attributes =
-    { position : Vector3
-    , normal : Vector3
-    , uv : Math.Vector2.Vec2
-    }
+    Elm3d.File.Obj.Attributes
 
 
 type alias Varyings =
     { v_normal : Vector3
     , v_uv : Math.Vector2.Vec2
+    , v_kd : Vector3
     }
 
 
@@ -91,17 +89,20 @@ vertexShaderT0 =
         attribute vec3 position;
         attribute vec3 normal;
         attribute vec2 uv;
+        attribute vec3 kd;
         
         uniform mat4 camera;
         uniform mat4 modelView;
 
         varying vec3 v_normal;
         varying vec2 v_uv;
+        varying vec3 v_kd;
     
         void main () {
             gl_Position = camera * modelView * vec4(position, 1.0);
             v_normal = mat3(modelView) * normal;
             v_uv = uv;
+            v_kd = kd;
         }
     |]
 
@@ -115,6 +116,7 @@ fragmentShaderT0 =
 
         varying vec3 v_normal;
         varying highp vec2 v_uv;
+        varying vec3 v_kd;
 
         void main () {
             vec3 normal = normalize(v_normal);
@@ -125,19 +127,22 @@ fragmentShaderT0 =
                 light = dot(normal, normalize(lightDirection));
             }
 
-            // TODO: Use actual colors from MTL
-            gl_FragColor = vec4(v_uv.x, v_uv.y, 0.5, 1.0);
-            gl_FragColor.rgb *= light;
+            gl_FragColor = vec4(v_kd, 1.0);
+            gl_FragColor.rgb *= clamp(light, 0.75, 1.0);
         }
     |]
 
 
-toEntityT0 : Elm3d.File.Obj.Data -> UniformsT0 -> WebGL.Entity
-toEntityT0 data uniforms =
+toEntityT0 : Elm3d.Asset.Model -> Elm3d.File.Obj.Data -> UniformsT0 -> WebGL.Entity
+toEntityT0 assets data uniforms =
     WebGL.entityWith [ WebGL.Settings.DepthTest.default ]
         vertexShaderT0
         fragmentShaderT0
-        (Elm3d.File.Obj.toMesh data)
+        (Elm3d.File.Obj.toMesh
+            { toKd = \n1 n2 -> Elm3d.Asset.findMtlKd data n1 n2 assets
+            }
+            data
+        )
         uniforms
 
 
@@ -159,17 +164,20 @@ vertexShaderT1 =
         attribute vec3 position;
         attribute vec3 normal;
         attribute vec2 uv;
+        attribute vec3 kd;
         
         uniform mat4 camera;
         uniform mat4 modelView;
 
         varying vec3 v_normal;
         varying vec2 v_uv;
+        varying vec3 v_kd;
     
         void main () {
             gl_Position = camera * modelView * vec4(position, 1.0);
             v_normal = mat3(modelView) * normal;
             v_uv = uv;
+            v_kd = kd;
         }
     |]
 
@@ -178,10 +186,13 @@ fragmentShaderT1 : WebGL.Shader {} UniformsT1 Varyings
 fragmentShaderT1 =
     [glsl|
         precision mediump float;
+
         uniform vec3 lightDirection;
         uniform sampler2D texture;
+
         varying vec3 v_normal;
         varying highp vec2 v_uv;
+        varying vec3 v_kd;
 
         void main () {
             vec3 normal = normalize(v_normal);
@@ -193,15 +204,19 @@ fragmentShaderT1 =
             }
 
             gl_FragColor = texture2D(texture, v_uv);
-            gl_FragColor.rgb *= light;
+            gl_FragColor.rgb *= clamp(light, 0.75, 1.0);
         }
     |]
 
 
-toEntityT1 : Elm3d.File.Obj.Data -> UniformsT1 -> WebGL.Entity
-toEntityT1 data uniforms =
+toEntityT1 : Elm3d.Asset.Model -> Elm3d.File.Obj.Data -> UniformsT1 -> WebGL.Entity
+toEntityT1 assets data uniforms =
     WebGL.entityWith [ WebGL.Settings.DepthTest.default ]
         vertexShaderT1
         fragmentShaderT1
-        (Elm3d.File.Obj.toMesh data)
+        (Elm3d.File.Obj.toMesh
+            { toKd = \n1 n2 -> Elm3d.Asset.findMtlKd data n1 n2 assets
+            }
+            data
+        )
         uniforms

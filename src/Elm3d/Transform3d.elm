@@ -3,6 +3,7 @@ module Elm3d.Transform3d exposing
     , withPosition, withRotation, withScale
     , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
+    , withScaleX, withScaleY, withScaleZ
     , toPosition, toRotation, toScale
     , toRotationX, toRotationY, toRotationZ
     , toMatrix4
@@ -15,8 +16,7 @@ module Elm3d.Transform3d exposing
 @docs withPosition, withRotation, withScale
 @docs withPositionX, withPositionY, withPositionZ
 @docs withRotationX, withRotationY, withRotationZ
-
-@docs combine
+@docs withScaleX, withScaleY, withScaleZ
 
 @docs toPosition, toRotation, toScale
 @docs toRotationX, toRotationY, toRotationZ
@@ -41,28 +41,6 @@ type alias Internals =
     , rotationZ : Float
     , scale : Vector3
     }
-
-
-
--- let
---     combined : Matrix4
---     combined =
--- in
--- Transform3d
---     { position = Math.Matrix4.
---     }
--- TODO: I think this is wrong
--- Transform3d
---     { position = Math.Vector3.add parent.position child.position
---     , rotationX = parent.rotationX + child.rotationX
---     , rotationY = parent.rotationY + child.rotationY
---     , rotationZ = parent.rotationZ + child.rotationZ
---     , scale =
---         Elm3d.Vector3.new
---             (Elm3d.Vector3.x parent.scale * Elm3d.Vector3.x child.scale)
---             (Elm3d.Vector3.y parent.scale * Elm3d.Vector3.y child.scale)
---             (Elm3d.Vector3.z parent.scale * Elm3d.Vector3.z child.scale)
---     }
 
 
 none : Transform3d
@@ -96,6 +74,21 @@ withScale props (Transform3d transform) =
     Transform3d { transform | scale = props }
 
 
+withPositionX : Float -> Transform3d -> Transform3d
+withPositionX props (Transform3d transform) =
+    Transform3d { transform | position = Math.Vector3.setX props transform.position }
+
+
+withPositionY : Float -> Transform3d -> Transform3d
+withPositionY props (Transform3d transform) =
+    Transform3d { transform | position = Math.Vector3.setY props transform.position }
+
+
+withPositionZ : Float -> Transform3d -> Transform3d
+withPositionZ props (Transform3d transform) =
+    Transform3d { transform | position = Math.Vector3.setZ props transform.position }
+
+
 withRotationX : Float -> Transform3d -> Transform3d
 withRotationX props (Transform3d transform) =
     Transform3d { transform | rotationX = props }
@@ -111,19 +104,19 @@ withRotationZ props (Transform3d transform) =
     Transform3d { transform | rotationZ = props }
 
 
-withPositionX : Float -> Transform3d -> Transform3d
-withPositionX props (Transform3d transform) =
-    Transform3d { transform | position = Math.Vector3.setX props transform.position }
+withScaleX : Float -> Transform3d -> Transform3d
+withScaleX props (Transform3d transform) =
+    Transform3d { transform | scale = Math.Vector3.setX props transform.scale }
 
 
-withPositionY : Float -> Transform3d -> Transform3d
-withPositionY props (Transform3d transform) =
-    Transform3d { transform | position = Math.Vector3.setY props transform.position }
+withScaleY : Float -> Transform3d -> Transform3d
+withScaleY props (Transform3d transform) =
+    Transform3d { transform | scale = Math.Vector3.setY props transform.scale }
 
 
-withPositionZ : Float -> Transform3d -> Transform3d
-withPositionZ props (Transform3d transform) =
-    Transform3d { transform | position = Math.Vector3.setZ props transform.position }
+withScaleZ : Float -> Transform3d -> Transform3d
+withScaleZ props (Transform3d transform) =
+    Transform3d { transform | scale = Math.Vector3.setZ props transform.scale }
 
 
 toMatrix4 : Transform3d -> Matrix4

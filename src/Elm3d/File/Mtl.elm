@@ -1,6 +1,7 @@
 module Elm3d.File.Mtl exposing
     ( Data
     , parse
+    , toKd
     )
 
 import Dict exposing (Dict)
@@ -12,6 +13,16 @@ type alias Data =
     { url : String
     , materials : Dict String Material
     }
+
+
+toKd : String -> Data -> Maybe Vector3
+toKd name data =
+    case Dict.get name data.materials of
+        Just material ->
+            material.kd
+
+        Nothing ->
+            Nothing
 
 
 type alias Material =

@@ -35,17 +35,20 @@ fragmentShader =
         varying mat4 v_modelView;
 
         void main () {
-            vec3 normal = vec3(
-                v_position.x >= 0.5 ? 1.0 : v_position.x <= -0.5 ? -1.0 : 0.0,
-                v_position.y >= 0.5 ? 1.0 : v_position.y <= -0.5 ? -1.0 : 0.0,
-                v_position.z >= 0.5 ? 1.0 : v_position.z <= -0.5 ? -1.0 : 0.0
-            );
+            float light = 1.0;
+            if (length(lightDirection) > 0.0) {
+                vec3 normal = vec3(
+                    v_position.x >= 0.5 ? 1.0 : v_position.x <= -0.5 ? -1.0 : 0.0,
+                    v_position.y >= 0.5 ? 1.0 : v_position.y <= -0.5 ? -1.0 : 0.0,
+                    v_position.z >= 0.5 ? 1.0 : v_position.z <= -0.5 ? -1.0 : 0.0
+                );
 
-            normal = mat3(v_modelView) * normal;
+                normal = mat3(v_modelView) * normal;
+                light = dot(normalize(normal), normalize(lightDirection));
+            }
 
-            float light = dot(normalize(normal), normalize(lightDirection));
             gl_FragColor = color;
-            gl_FragColor.rgb *= light;
+            gl_FragColor.rgb *= clamp(light, 0.75, 1.0);
         }
     |]
 

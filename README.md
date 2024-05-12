@@ -20,13 +20,13 @@ import Elm3d.Camera exposing (Camera)
 import Elm3d.Node exposing (Node)
 import Elm3d.Program exposing (Program)
 import Elm3d.Vector3
-import Elm3d.Window
+import Elm3d.Viewport
 
 
 main : Program
 main =
     Elm3d.Program.new
-        { window = Elm3d.Window.fullscreenAspect (16 / 9)
+        { window = Elm3d.Viewport.fullscreenAspect (16 / 9)
         , camera =
             Elm3d.Camera.perspective
                 { fov = 60
