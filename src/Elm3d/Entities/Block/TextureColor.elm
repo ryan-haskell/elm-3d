@@ -1,4 +1,4 @@
-module Elm3d.Entities.Cube.TextureColor exposing (Uniforms, toEntity)
+module Elm3d.Entities.Block.TextureColor exposing (Uniforms, toEntity)
 
 import Elm3d.Color exposing (Color)
 import Elm3d.Matrix4 exposing (Matrix4)
@@ -11,7 +11,7 @@ vertexShader : WebGL.Shader Attributes Uniforms Varyings
 vertexShader =
     [glsl|
         attribute vec3 position;
-        uniform float scale;
+        uniform vec3 scale;
         uniform mat4 camera;
         uniform mat4 modelView;
         varying vec3 v_position;
@@ -59,7 +59,7 @@ type alias Attributes =
 
 
 type alias Uniforms =
-    { scale : Float
+    { scale : Vector3
     , camera : Matrix4
     , modelView : Matrix4
     , color : Color

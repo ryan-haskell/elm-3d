@@ -13,14 +13,18 @@ type alias Color =
     Vector4
 
 
-rgb : Float -> Float -> Float -> Color
+rgb : Int -> Int -> Int -> Color
 rgb r g b =
-    Elm3d.Vector4.new r g b 1.0
+    rgba r g b 1.0
 
 
-rgba : Float -> Float -> Float -> Float -> Color
+rgba : Int -> Int -> Int -> Float -> Color
 rgba r g b a =
-    Elm3d.Vector4.new r g b a
+    Elm3d.Vector4.new
+        (toFloat r / 255)
+        (toFloat g / 255)
+        (toFloat b / 255)
+        a
 
 
 transparent : Color

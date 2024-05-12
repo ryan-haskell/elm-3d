@@ -77,7 +77,7 @@ init { background, camera, nodes } _ =
         , nodes = nodes
         , input = Elm3d.Input.init
         , assets = assets
-        , fps = FixedSet.init { maxSize = 50 }
+        , fps = FixedSet.init { maxSize = 30 }
         }
     , Cmd.batch
         [ Browser.Dom.getViewport
@@ -198,15 +198,8 @@ hasAnyUpdateNodes (Model model) =
 view : ( Int, Int ) -> Model -> Html Msg
 view size (Model model) =
     let
-        downscaling : Float
-        downscaling =
-            1
-
         ( width, height ) =
-            Tuple.mapBoth
-                (\x -> floor (toFloat x / downscaling))
-                (\y -> floor (toFloat y / downscaling))
-                size
+            size
 
         directionalLight : Maybe Node
         directionalLight =
@@ -218,7 +211,7 @@ view size (Model model) =
             model.nodes
                 |> List.concatMap
                     (Elm3d.Node.toEntity Elm3d.Matrix4.identity
-                        { camera = Elm3d.Camera.toMatrix4 ( width, height ) model.camera
+                        { camera = Elm3d.Camera.toMatrix4 size model.camera
                         , light = directionalLight |> Maybe.map Elm3d.Node.toRotation
                         , assets = model.assets
                         }
@@ -232,11 +225,6 @@ view size (Model model) =
                     , Html.Attributes.height height
                     , Html.Attributes.style "background-color" (Elm3d.Color.toHtmlColor model.background)
                     , Html.Attributes.style "transform-origin" "top left"
-                    , if downscaling == 1 then
-                        Html.Attributes.style "" ""
-
-                      else
-                        Html.Attributes.style "transform" ("scale(" ++ String.fromFloat downscaling ++ ")")
                     ]
 
         viewFps : Html msg
@@ -246,6 +234,8 @@ view size (Model model) =
                 , Html.Attributes.style "top" "1rem"
                 , Html.Attributes.style "right" "1rem"
                 , Html.Attributes.style "font-family" "sans-serif"
+                , Html.Attributes.style "color" "white"
+                , Html.Attributes.style "text-shadow" "0 -1px 1px black, 0 1px 1px black, -1px 0 1px black, 1px 0 1px black"
                 ]
                 [ case FixedSet.toAverage model.fps of
                     Just spf ->

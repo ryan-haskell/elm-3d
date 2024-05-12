@@ -1,8 +1,8 @@
 module Elm3d.Vector3 exposing
     ( Vector3
-    , new, one, zero
+    , new, fromRecord, fromFloat
+    , one, zero
     , positiveX, positiveY, positiveZ
-    , fromRecord
     , x, y, z
     )
 
@@ -10,9 +10,9 @@ module Elm3d.Vector3 exposing
 
 @docs Vector3
 
-@docs new, one, zero
+@docs new, fromRecord, fromFloat
+@docs one, zero
 @docs positiveX, positiveY, positiveZ
-@docs fromRecord
 
 @docs x, y, z
 
@@ -31,14 +31,14 @@ type alias Vector3 =
 -}
 zero : Vector3
 zero =
-    Math.Vector3.vec3 0 0 0
+    fromFloat 0
 
 
 {-| Create the vector (1, 1, 1)
 -}
 one : Vector3
 one =
-    Math.Vector3.vec3 1 1 1
+    fromFloat 1
 
 
 {-| Create the vector (1, 0, 0)
@@ -67,6 +67,13 @@ positiveZ =
 new : Float -> Float -> Float -> Vector3
 new x_ y_ z_ =
     Math.Vector3.vec3 x_ y_ z_
+
+
+{-| Create a vector from one float value
+-}
+fromFloat : Float -> Vector3
+fromFloat val =
+    Math.Vector3.vec3 val val val
 
 
 {-| Create a vector from a record

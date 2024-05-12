@@ -1,6 +1,6 @@
 module Elm3d.Node exposing
     ( Node
-    , cube, obj, light
+    , cube, block, obj, light
     , group
     , withPosition, withRotation, withScale
     , withPositionX, withPositionY, withPositionZ
@@ -21,7 +21,7 @@ module Elm3d.Node exposing
 
 ### **Creating nodes**
 
-@docs cube, obj, light
+@docs cube, block, obj, light
 @docs group
 
 
@@ -57,7 +57,7 @@ module Elm3d.Node exposing
 import Elm3d.Asset
 import Elm3d.Camera.Projection exposing (Projection(..))
 import Elm3d.Color exposing (Color)
-import Elm3d.Entities.Cube.TextureColor
+import Elm3d.Entities.Block.TextureColor
 import Elm3d.Entities.Obj
 import Elm3d.Input.Event
 import Elm3d.Matrix4 exposing (Matrix4)
@@ -76,7 +76,7 @@ type Node
 
 
 type Kind
-    = Cube { size : Float, texture : Texture }
+    = Block { size : Vector3, texture : Texture }
     | Obj { url : String }
     | Group (List Node)
     | DirectionalLight
@@ -112,8 +112,20 @@ cube :
     }
     -> Node
 cube props =
+    block
+        { size = Elm3d.Vector3.fromFloat props.size
+        , texture = props.texture
+        }
+
+
+block :
+    { size : Vector3
+    , texture : Texture
+    }
+    -> Node
+block props =
     Node
-        { kind = Cube props
+        { kind = Block props
         , onInput = Nothing
         , onUpdate = Nothing
         , transform = Elm3d.Transform3d.none
@@ -385,10 +397,10 @@ toEntity groupMatrix props ((Node { transform, kind }) as node) =
                 Nothing ->
                     []
 
-        Cube { size, texture } ->
+        Block { size, texture } ->
             case texture of
                 Elm3d.Texture.Color color_ ->
-                    [ Elm3d.Entities.Cube.TextureColor.toEntity
+                    [ Elm3d.Entities.Block.TextureColor.toEntity
                         { scale = size
                         , color = color_
                         , modelView =

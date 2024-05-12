@@ -1,11 +1,12 @@
 module Elm3d.Camera exposing
     ( Camera
     , orthographic, perspective
+    , withIsometricTransform
     , withOnUpdate
-    , withPosition, withRotation, withScale
+    , withPosition, withRotation
     , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
-    , withScaleX, withScaleY, withScaleZ
+    , rotateX, rotateY, rotateZ
     , toMatrix4, hasUpdateFunction, update
     )
 
@@ -13,13 +14,14 @@ module Elm3d.Camera exposing
 
 @docs Camera
 @docs orthographic, perspective
+@docs withIsometricTransform
 
 @docs withOnUpdate, withOnInput
 
-@docs withPosition, withRotation, withScale
+@docs withPosition, withRotation
 @docs withPositionX, withPositionY, withPositionZ
 @docs withRotationX, withRotationY, withRotationZ
-@docs withScaleX, withScaleY, withScaleZ
+@docs rotateX, rotateY, rotateZ
 
 
 ### Internals
@@ -32,6 +34,7 @@ import Elm3d.Camera.Projection exposing (Projection(..))
 import Elm3d.Matrix4 exposing (Matrix4)
 import Elm3d.Node exposing (Node)
 import Elm3d.Transform3d exposing (Transform3d)
+import Elm3d.Vector2 exposing (Vector2)
 import Elm3d.Vector3 exposing (Vector3)
 import Math.Matrix4
 import Math.Vector3
@@ -78,6 +81,51 @@ perspective props =
 
 
 
+-- ISOMETRIC
+
+
+withIsometricTransform :
+    { horizontalAngle : Float
+    , verticalAngle : Float
+    , distance : Float
+    , offset : Elm3d.Vector2.Vector2
+    }
+    -> Camera
+    -> Camera
+withIsometricTransform props camera =
+    let
+        offset : { x : Float, y : Float }
+        offset =
+            Elm3d.Vector2.toRecord props.offset
+
+        a =
+            props.horizontalAngle
+
+        compA =
+            pi / 2 - a
+
+        dx =
+            offset.x * cos a - offset.y * cos compA
+
+        dz =
+            -offset.x * sin a - offset.y * sin compA
+    in
+    camera
+        |> withRotationX -props.verticalAngle
+        |> withRotationY props.horizontalAngle
+        |> withPosition
+            (if props.verticalAngle >= pi / 2 then
+                Elm3d.Vector3.new 0 props.distance 0
+
+             else
+                Elm3d.Vector3.new
+                    (props.distance * sin props.horizontalAngle + dx)
+                    (props.distance * tan props.verticalAngle)
+                    (props.distance * cos props.horizontalAngle + dz)
+            )
+
+
+
 -- MODIFIERS
 
 
@@ -89,11 +137,6 @@ withPosition props (Camera node) =
 withRotation : Vector3 -> Camera -> Camera
 withRotation props (Camera node) =
     Camera (Elm3d.Node.withRotation props node)
-
-
-withScale : Vector3 -> Camera -> Camera
-withScale props (Camera node) =
-    Camera (Elm3d.Node.withScale props node)
 
 
 withPositionX : Float -> Camera -> Camera
@@ -126,19 +169,19 @@ withRotationZ props (Camera node) =
     Camera (Elm3d.Node.withRotationZ props node)
 
 
-withScaleX : Float -> Camera -> Camera
-withScaleX props (Camera node) =
-    Camera (Elm3d.Node.withScaleX props node)
+rotateX : Float -> Camera -> Camera
+rotateX props (Camera node) =
+    Camera (Elm3d.Node.rotateX props node)
 
 
-withScaleY : Float -> Camera -> Camera
-withScaleY props (Camera node) =
-    Camera (Elm3d.Node.withScaleY props node)
+rotateY : Float -> Camera -> Camera
+rotateY props (Camera node) =
+    Camera (Elm3d.Node.rotateY props node)
 
 
-withScaleZ : Float -> Camera -> Camera
-withScaleZ props (Camera node) =
-    Camera (Elm3d.Node.withScaleZ props node)
+rotateZ : Float -> Camera -> Camera
+rotateZ props (Camera node) =
+    Camera (Elm3d.Node.rotateZ props node)
 
 
 hasUpdateFunction : Camera -> Bool
@@ -216,7 +259,11 @@ toMatrix4 window (Camera node) =
                         (size / aspect / 2)
                         near
                         far
-                        |> applyTransform
+                        -- Scale has no effect on the camera
+                        |> Math.Matrix4.rotate -rx Elm3d.Vector3.positiveX
+                        |> Math.Matrix4.rotate -ry Elm3d.Vector3.positiveY
+                        |> Math.Matrix4.rotate -rz Elm3d.Vector3.positiveZ
+                        |> Math.Matrix4.translate3 -x -y -z
 
                 Perspective { fov, near, far } ->
                     let
@@ -230,7 +277,11 @@ toMatrix4 window (Camera node) =
                             width / height
                     in
                     Math.Matrix4.makePerspective fov aspect near far
-                        |> applyTransform
+                        -- Scale has no effect on the camera
+                        |> Math.Matrix4.rotate -rx Elm3d.Vector3.positiveX
+                        |> Math.Matrix4.rotate -ry Elm3d.Vector3.positiveY
+                        |> Math.Matrix4.rotate -rz Elm3d.Vector3.positiveZ
+                        |> Math.Matrix4.translate3 -x -y -z
 
         Nothing ->
             Math.Matrix4.identity

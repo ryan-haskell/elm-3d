@@ -3,7 +3,7 @@ module Elm3d.Vector2 exposing
     , new, one, zero
     , positiveX, positiveY
     , fromRecord
-    , x, y
+    , x, y, toRecord
     )
 
 {-|
@@ -14,7 +14,7 @@ module Elm3d.Vector2 exposing
 @docs positiveX, positiveY
 @docs fromRecord
 
-@docs x, y
+@docs x, y, toRecord
 
 -}
 
@@ -81,3 +81,12 @@ x vec2 =
 y : Vector2 -> Float
 y vec2 =
     Math.Vector2.getY vec2
+
+
+{-| Get the vector as an Elm record
+-}
+toRecord : Vector2 -> { x : Float, y : Float }
+toRecord vec2 =
+    { x = Math.Vector2.getX vec2
+    , y = Math.Vector2.getY vec2
+    }

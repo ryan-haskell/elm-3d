@@ -16,6 +16,6 @@ color color_ =
     Color color_
 
 
-rgb : Float -> Float -> Float -> Texture
+rgb : Int -> Int -> Int -> Texture
 rgb r g b =
     Color (Elm3d.Color.rgb r g b)

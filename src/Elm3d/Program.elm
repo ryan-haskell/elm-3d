@@ -46,13 +46,13 @@ view viewport model =
     in
     if Elm3d.Viewport.isFullscreen viewport then
         Html.div [ Html.Attributes.class "elm-3d" ]
-            [ Html.node "style" [] [ Html.text """body { margin: 0; overflow: hidden; }""" ]
+            [ Html.node "style" [] [ Html.text """html, body { margin: 0; overflow: hidden; background: black; }""" ]
             , Elm3d.Component.view size model
             ]
 
     else if Elm3d.Viewport.isFullscreenAspect viewport then
         Html.div [ Html.Attributes.class "elm-3d" ]
-            [ Html.node "style" [] [ Html.text """html, body { margin: 0; overflow: hidden; height: 100%; } .elm-3d { height: 100%; display: flex; align-items: center; justify-content: center; }""" ]
+            [ Html.node "style" [] [ Html.text """html, body { margin: 0; overflow: hidden; height: 100%; background: black; } .elm-3d { height: 100%; display: flex; align-items: center; justify-content: center; }""" ]
             , Elm3d.Component.view size model
             ]
 
