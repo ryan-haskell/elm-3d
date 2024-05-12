@@ -3,7 +3,7 @@ module Elm3d.File.Obj exposing
     , Data
     , Error(..)
     , parse
-    , toMesh
+    , updateMesh
     )
 
 import Array exposing (Array)
@@ -16,6 +16,7 @@ import WebGL
 type alias Data =
     { url : String
     , info : Info
+    , mesh : Maybe (WebGL.Mesh Attributes)
     }
 
 
@@ -49,6 +50,7 @@ parse : String -> String -> Data
 parse url raw =
     { url = url
     , info = parseInfo url (String.lines raw)
+    , mesh = Nothing
     }
 
 
@@ -319,18 +321,18 @@ type alias MeshProps =
     }
 
 
-toMesh :
-    MeshProps
-    -> Data
-    -> WebGL.Mesh Attributes
-toMesh props data =
+updateMesh : MeshProps -> Data -> Data
+updateMesh props data =
     let
         { attributes, indices } =
             render props data
+
+        mesh =
+            WebGL.indexedTriangles
+                (Array.toList attributes)
+                (Array.toList indices)
     in
-    WebGL.indexedTriangles
-        (Array.toList attributes)
-        (Array.toList indices)
+    { data | mesh = Just mesh }
 
 
 type alias MeshData =

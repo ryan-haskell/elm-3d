@@ -133,16 +133,12 @@ fragmentShaderT0 =
     |]
 
 
-toEntityT0 : Elm3d.Asset.Model -> Elm3d.File.Obj.Data -> UniformsT0 -> WebGL.Entity
-toEntityT0 assets data uniforms =
+toEntityT0 : WebGL.Mesh Attributes -> UniformsT0 -> WebGL.Entity
+toEntityT0 mesh uniforms =
     WebGL.entityWith [ WebGL.Settings.DepthTest.default ]
         vertexShaderT0
         fragmentShaderT0
-        (Elm3d.File.Obj.toMesh
-            { toKd = \n1 n2 -> Elm3d.Asset.findMtlKd data n1 n2 assets
-            }
-            data
-        )
+        mesh
         uniforms
 
 
@@ -209,14 +205,10 @@ fragmentShaderT1 =
     |]
 
 
-toEntityT1 : Elm3d.Asset.Model -> Elm3d.File.Obj.Data -> UniformsT1 -> WebGL.Entity
-toEntityT1 assets data uniforms =
+toEntityT1 : WebGL.Mesh Attributes -> UniformsT1 -> WebGL.Entity
+toEntityT1 mesh uniforms =
     WebGL.entityWith [ WebGL.Settings.DepthTest.default ]
         vertexShaderT1
         fragmentShaderT1
-        (Elm3d.File.Obj.toMesh
-            { toKd = \n1 n2 -> Elm3d.Asset.findMtlKd data n1 n2 assets
-            }
-            data
-        )
+        mesh
         uniforms

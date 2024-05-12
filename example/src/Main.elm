@@ -27,9 +27,8 @@ main =
                 |> Elm3d.Camera.withOnUpdate spin
         , nodes =
             [ ground
-
-            -- , buildings
-            -- , villagers
+            , buildings
+            , villagers
             , trees
 
             -- , Elm3d.Node.light { direction = Elm3d.Vector3.new 1 1 0 }
@@ -52,18 +51,17 @@ toTreeNode offset =
         |> Elm3d.Node.withScale (Elm3d.Vector3.new 8 8 8)
         |> Elm3d.Node.withPositionX (16 * cos (pi * toFloat offset / 4))
         |> Elm3d.Node.withPositionZ (16 * sin (pi * toFloat offset / 4))
-        |> Elm3d.Node.withPositionY -1.5
+        |> Elm3d.Node.withPositionY -1
 
 
 villagers : Node
 villagers =
     Elm3d.Node.group
         [ runningVillager
-
-        -- , toVillager { name = "male2" }
-        --     |> Elm3d.Node.withPositionX 1.25
-        --     |> Elm3d.Node.withPositionZ 0.75
-        --     |> Elm3d.Node.withRotationY (-pi / 8)
+        , toVillager { name = "male2" }
+            |> Elm3d.Node.withPositionX 1.25
+            |> Elm3d.Node.withPositionZ 0.75
+            |> Elm3d.Node.withRotationY (-pi / 8)
         ]
         |> Elm3d.Node.withPositionY -0.5
 
@@ -75,7 +73,7 @@ ground =
         , texture = Elm3d.Texture.rgb 0 0.75 0.5
         }
         |> Elm3d.Node.withScaleY 0.002
-        |> Elm3d.Node.withPositionY -1.55
+        |> Elm3d.Node.withPositionY -0.55
 
 
 runningVillager : Node

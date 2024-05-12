@@ -350,22 +350,27 @@ toEntity groupMatrix props ((Node { transform, kind }) as node) =
         Obj { url } ->
             case Elm3d.Asset.findObj url props.assets of
                 Just obj_ ->
-                    case Elm3d.Entities.Obj.findTextures obj_ props.assets of
-                        Nothing ->
+                    case
+                        ( obj_.mesh
+                        , Elm3d.Entities.Obj.findTextures obj_ props.assets
+                        )
+                    of
+                        ( Nothing, _ ) ->
                             []
 
-                        Just [] ->
-                            [ Elm3d.Entities.Obj.toEntityT0 props.assets
-                                obj_
+                        ( _, Nothing ) ->
+                            []
+
+                        ( Just mesh, Just [] ) ->
+                            [ Elm3d.Entities.Obj.toEntityT0 mesh
                                 { modelView = Math.Matrix4.mul groupMatrix (Elm3d.Transform3d.toMatrix4 transform)
                                 , camera = props.camera
                                 , lightDirection = props.light |> Maybe.withDefault Elm3d.Vector3.zero
                                 }
                             ]
 
-                        Just (t1 :: []) ->
-                            [ Elm3d.Entities.Obj.toEntityT1 props.assets
-                                obj_
+                        ( Just mesh, Just (t1 :: []) ) ->
+                            [ Elm3d.Entities.Obj.toEntityT1 mesh
                                 { modelView = Math.Matrix4.mul groupMatrix (Elm3d.Transform3d.toMatrix4 transform)
                                 , camera = props.camera
                                 , lightDirection = props.light |> Maybe.withDefault Elm3d.Vector3.zero

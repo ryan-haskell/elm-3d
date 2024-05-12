@@ -164,6 +164,7 @@ update msg (Model model) =
                                     |> Dict.insert url (Mtl (Success mtlFile))
                                 )
                 }
+                |> updateObjMeshes
             , Cmd.batch (List.map (fetchPngTexture (Model model)) pngTextureUrls)
             )
 
@@ -173,7 +174,12 @@ update msg (Model model) =
             )
 
         FetchedPngTexture url (Ok texture) ->
-            ( Model { model | dict = Dict.insert url (Png (Success texture)) model.dict }
+            ( Model
+                { model
+                    | dict =
+                        Dict.insert url (Png (Success texture)) model.dict
+                }
+                |> updateObjMeshes
             , Cmd.none
             )
 
@@ -181,6 +187,34 @@ update msg (Model model) =
             ( Model { model | dict = Dict.insert url (Png (Failure (Texture textureError))) model.dict }
             , Cmd.none
             )
+
+
+updateObjMeshes : Model -> Model
+updateObjMeshes ((Model model) as assets) =
+    let
+        updateObjMesh : String -> Asset -> Asset
+        updateObjMesh key asset =
+            case asset of
+                Obj (Success data) ->
+                    let
+                        newData =
+                            Elm3d.File.Obj.updateMesh
+                                { toKd = \n1 n2 -> findMtlKd data n1 n2 assets
+                                }
+                                data
+                    in
+                    Obj (Success newData)
+
+                Obj _ ->
+                    asset
+
+                Mtl _ ->
+                    asset
+
+                Png _ ->
+                    asset
+    in
+    Model { model | dict = Dict.map updateObjMesh model.dict }
 
 
 
