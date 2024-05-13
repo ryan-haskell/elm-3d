@@ -97,6 +97,7 @@ type Msg
     | Resize Int Int
     | Input Elm3d.Input.RawEvent
     | Asset Elm3d.Asset.Msg
+    | Focus Browser.Events.Visibility
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -127,6 +128,7 @@ update msg (Model model) =
                 ctx =
                     { dt = dt
                     , time = time
+                    , input = model.input
                     }
             in
             ( Model
@@ -155,6 +157,15 @@ update msg (Model model) =
             , Cmd.none
             )
 
+        Focus _ ->
+            let
+                _ =
+                    Debug.log "Hi"
+            in
+            ( Model { model | input = Elm3d.Input.releaseAllKeys model.input }
+            , Cmd.none
+            )
+
         Input internalEvent ->
             let
                 ( input, maybeEvent ) =
@@ -162,16 +173,24 @@ update msg (Model model) =
                         { event = internalEvent }
                         model.input
 
-                newNodes : List Node
-                newNodes =
+                ( newNodes, newCamera ) =
                     case maybeEvent of
                         Just event ->
-                            List.map (Elm3d.Node.onInput event) model.nodes
+                            ( List.map (Elm3d.Node.onInput event) model.nodes
+                            , Elm3d.Camera.onInput event model.camera
+                            )
 
                         Nothing ->
-                            model.nodes
+                            ( model.nodes
+                            , model.camera
+                            )
             in
-            ( Model { model | input = input, nodes = newNodes }
+            ( Model
+                { model
+                    | input = input
+                    , camera = newCamera
+                    , nodes = newNodes
+                }
             , Cmd.none
             )
 
@@ -186,6 +205,7 @@ subscriptions model =
             Sub.none
         , Browser.Events.onResize Resize
         , Elm3d.Input.subscriptions Input
+        , Browser.Events.onVisibilityChange Focus
         ]
 
 
@@ -217,9 +237,9 @@ view size (Model model) =
                         }
                     )
                 |> WebGL.toHtmlWith
-                    [ WebGL.alpha True
-                    , WebGL.antialias
+                    [ WebGL.antialias
                     , WebGL.depth 1
+                    , WebGL.alpha False
                     ]
                     [ Html.Attributes.width width
                     , Html.Attributes.height height

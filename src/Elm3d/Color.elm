@@ -1,6 +1,7 @@
 module Elm3d.Color exposing
     ( Color
     , rgb
+    , rgba
     , toHtmlColor
     , transparent
     )

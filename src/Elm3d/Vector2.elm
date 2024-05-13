@@ -3,6 +3,8 @@ module Elm3d.Vector2 exposing
     , new, one, zero
     , positiveX, positiveY
     , fromRecord
+    , normalize, scale
+    , length
     , x, y, toRecord
     )
 
@@ -13,6 +15,9 @@ module Elm3d.Vector2 exposing
 @docs new, one, zero
 @docs positiveX, positiveY
 @docs fromRecord
+
+@docs normalize, scale
+@docs length
 
 @docs x, y, toRecord
 
@@ -90,3 +95,18 @@ toRecord vec2 =
     { x = Math.Vector2.getX vec2
     , y = Math.Vector2.getY vec2
     }
+
+
+normalize : Vector2 -> Vector2
+normalize vec2 =
+    Math.Vector2.normalize vec2
+
+
+scale : Float -> Vector2 -> Vector2
+scale constant vec2 =
+    Math.Vector2.scale constant vec2
+
+
+length : Vector2 -> Float
+length =
+    Math.Vector2.length

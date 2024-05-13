@@ -4,9 +4,10 @@ module Elm3d.Transform3d exposing
     , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
     , withScaleX, withScaleY, withScaleZ
-    , toPosition, toRotation, toScale
+    , toPositionX, toPositionY, toPositionZ
     , toRotationX, toRotationY, toRotationZ
-    , toMatrix4
+    , toScaleX, toScaleY, toScaleZ
+    , toMatrix4, toPosition, toRotation, toScale
     )
 
 {-|
@@ -18,9 +19,9 @@ module Elm3d.Transform3d exposing
 @docs withRotationX, withRotationY, withRotationZ
 @docs withScaleX, withScaleY, withScaleZ
 
-@docs toPosition, toRotation, toScale
+@docs toPositionX, toPositionY, toPositionZ
 @docs toRotationX, toRotationY, toRotationZ
-@docs toMatrix4
+@docs toScaleX, toScaleY, toScaleZ
 
 -}
 
@@ -146,6 +147,21 @@ toScale (Transform3d transform) =
     transform.scale
 
 
+toPositionX : Transform3d -> Float
+toPositionX (Transform3d transform) =
+    Elm3d.Vector3.x transform.position
+
+
+toPositionY : Transform3d -> Float
+toPositionY (Transform3d transform) =
+    Elm3d.Vector3.y transform.position
+
+
+toPositionZ : Transform3d -> Float
+toPositionZ (Transform3d transform) =
+    Elm3d.Vector3.z transform.position
+
+
 toRotationX : Transform3d -> Float
 toRotationX (Transform3d transform) =
     transform.rotationX
@@ -159,3 +175,18 @@ toRotationY (Transform3d transform) =
 toRotationZ : Transform3d -> Float
 toRotationZ (Transform3d transform) =
     transform.rotationZ
+
+
+toScaleX : Transform3d -> Float
+toScaleX (Transform3d transform) =
+    Elm3d.Vector3.x transform.scale
+
+
+toScaleY : Transform3d -> Float
+toScaleY (Transform3d transform) =
+    Elm3d.Vector3.y transform.scale
+
+
+toScaleZ : Transform3d -> Float
+toScaleZ (Transform3d transform) =
+    Elm3d.Vector3.z transform.scale

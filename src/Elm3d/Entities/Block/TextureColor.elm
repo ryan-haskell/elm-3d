@@ -4,6 +4,8 @@ import Elm3d.Color exposing (Color)
 import Elm3d.Matrix4 exposing (Matrix4)
 import Elm3d.Vector3 exposing (Vector3)
 import WebGL
+import WebGL.Settings
+import WebGL.Settings.Blend
 import WebGL.Settings.DepthTest
 
 
@@ -75,7 +77,13 @@ type alias Varyings =
 
 toEntity : Uniforms -> WebGL.Entity
 toEntity uniforms =
-    WebGL.entityWith [ WebGL.Settings.DepthTest.default ]
+    WebGL.entityWith
+        [ WebGL.Settings.DepthTest.default
+        , WebGL.Settings.cullFace WebGL.Settings.back
+        , WebGL.Settings.Blend.add
+            WebGL.Settings.Blend.one
+            WebGL.Settings.Blend.oneMinusSrcAlpha
+        ]
         vertexShader
         fragmentShader
         mesh

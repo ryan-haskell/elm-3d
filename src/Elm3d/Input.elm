@@ -2,6 +2,8 @@ module Elm3d.Input exposing
     ( Model
     , RawEvent
     , init
+    , isKeyPressed
+    , releaseAllKeys
     , subscriptions
     , update
     )
@@ -25,6 +27,16 @@ type RawEvent
 
 type Model
     = Model { pressed : Set Int }
+
+
+isKeyPressed : Model -> Key -> Bool
+isKeyPressed (Model { pressed }) key =
+    Set.member (Elm3d.Input.Key.toCode key) pressed
+
+
+releaseAllKeys : Model -> Model
+releaseAllKeys (Model model) =
+    Model { model | pressed = Set.empty }
 
 
 init : Model

@@ -2,12 +2,13 @@ module Elm3d.Camera exposing
     ( Camera
     , orthographic, perspective
     , withIsometricTransform
-    , withOnUpdate
+    , withOnUpdate, withOnInput
     , withPosition, withRotation
     , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
+    , moveX, moveY, moveZ
     , rotateX, rotateY, rotateZ
-    , toMatrix4, hasUpdateFunction, update
+    , toMatrix4, hasUpdateFunction, update, onInput
     )
 
 {-|
@@ -21,16 +22,19 @@ module Elm3d.Camera exposing
 @docs withPosition, withRotation
 @docs withPositionX, withPositionY, withPositionZ
 @docs withRotationX, withRotationY, withRotationZ
+@docs moveX, moveY, moveZ
 @docs rotateX, rotateY, rotateZ
 
 
 ### Internals
 
-@docs toMatrix4, hasUpdateFunction, update
+@docs toMatrix4, hasUpdateFunction, update, onInput
 
 -}
 
 import Elm3d.Camera.Projection exposing (Projection(..))
+import Elm3d.Input.Event
+import Elm3d.Isometric
 import Elm3d.Matrix4 exposing (Matrix4)
 import Elm3d.Node exposing (Node)
 import Elm3d.Transform3d exposing (Transform3d)
@@ -94,21 +98,17 @@ withIsometricTransform :
     -> Camera
 withIsometricTransform props camera =
     let
-        offset : { x : Float, y : Float }
-        offset =
-            Elm3d.Vector2.toRecord props.offset
+        isometricVector : Vector2
+        isometricVector =
+            Elm3d.Isometric.toOffsetVector
+                { angle = props.horizontalAngle
+                , input = props.offset
+                }
 
-        a =
-            props.horizontalAngle
-
-        compA =
-            pi / 2 - a
-
-        dx =
-            offset.x * cos a - offset.y * cos compA
-
-        dz =
-            -offset.x * sin a - offset.y * sin compA
+        ( dx, dz ) =
+            ( Elm3d.Vector2.x isometricVector
+            , Elm3d.Vector2.y isometricVector
+            )
     in
     camera
         |> withRotationX -props.verticalAngle
@@ -169,6 +169,21 @@ withRotationZ props (Camera node) =
     Camera (Elm3d.Node.withRotationZ props node)
 
 
+moveX : Float -> Camera -> Camera
+moveX props (Camera node) =
+    Camera (Elm3d.Node.moveX props node)
+
+
+moveY : Float -> Camera -> Camera
+moveY props (Camera node) =
+    Camera (Elm3d.Node.moveY props node)
+
+
+moveZ : Float -> Camera -> Camera
+moveZ props (Camera node) =
+    Camera (Elm3d.Node.moveZ props node)
+
+
 rotateX : Float -> Camera -> Camera
 rotateX props (Camera node) =
     Camera (Elm3d.Node.rotateX props node)
@@ -194,10 +209,30 @@ update ctx (Camera node) =
     Camera (Elm3d.Node.update ctx node)
 
 
+onInput : Elm3d.Input.Event.Event -> Camera -> Camera
+onInput ctx (Camera node) =
+    Camera (Elm3d.Node.onInput ctx node)
+
+
 withOnUpdate : (Elm3d.Node.Context -> Camera -> Camera) -> Camera -> Camera
 withOnUpdate fn (Camera node) =
     Camera
         (Elm3d.Node.withOnUpdate
+            (\ctx nodeIn ->
+                let
+                    (Camera nodeOut) =
+                        fn ctx (Camera nodeIn)
+                in
+                nodeOut
+            )
+            node
+        )
+
+
+withOnInput : (Elm3d.Input.Event.Event -> Camera -> Camera) -> Camera -> Camera
+withOnInput fn (Camera node) =
+    Camera
+        (Elm3d.Node.withOnInput
             (\ctx nodeIn ->
                 let
                     (Camera nodeOut) =

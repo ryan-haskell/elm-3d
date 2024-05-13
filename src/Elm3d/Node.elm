@@ -6,6 +6,7 @@ module Elm3d.Node exposing
     , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
     , withScaleX, withScaleY, withScaleZ
+    , moveX, moveY, moveZ
     , rotateX, rotateY, rotateZ
     , Context, withOnUpdate
     , withOnInput
@@ -31,6 +32,7 @@ module Elm3d.Node exposing
 @docs withPositionX, withPositionY, withPositionZ
 @docs withRotationX, withRotationY, withRotationZ
 @docs withScaleX, withScaleY, withScaleZ
+@docs moveX, moveY, moveZ
 @docs rotateX, rotateY, rotateZ
 
 
@@ -57,9 +59,11 @@ module Elm3d.Node exposing
 import Elm3d.Asset
 import Elm3d.Camera.Projection exposing (Projection(..))
 import Elm3d.Color exposing (Color)
+import Elm3d.Context
 import Elm3d.Entities.Block.TextureColor
 import Elm3d.Entities.Obj
 import Elm3d.Input.Event
+import Elm3d.Input.Key
 import Elm3d.Matrix4 exposing (Matrix4)
 import Elm3d.Texture exposing (Texture)
 import Elm3d.Transform3d exposing (Transform3d)
@@ -67,7 +71,6 @@ import Elm3d.Vector3 exposing (Vector3)
 import Elm3d.Vector4 exposing (Vector4)
 import Math.Matrix4
 import WebGL
-import WebGL.Settings.DepthTest
 import WebGL.Texture
 
 
@@ -234,6 +237,39 @@ withScaleZ props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withScaleZ props node.transform }
 
 
+moveX : Float -> Node -> Node
+moveX delta (Node node) =
+    Node
+        { node
+            | transform =
+                Elm3d.Transform3d.withPositionX
+                    (delta + Elm3d.Transform3d.toPositionX node.transform)
+                    node.transform
+        }
+
+
+moveY : Float -> Node -> Node
+moveY delta (Node node) =
+    Node
+        { node
+            | transform =
+                Elm3d.Transform3d.withPositionY
+                    (delta + Elm3d.Transform3d.toPositionY node.transform)
+                    node.transform
+        }
+
+
+moveZ : Float -> Node -> Node
+moveZ delta (Node node) =
+    Node
+        { node
+            | transform =
+                Elm3d.Transform3d.withPositionZ
+                    (delta + Elm3d.Transform3d.toPositionZ node.transform)
+                    node.transform
+        }
+
+
 rotateX : Float -> Node -> Node
 rotateX delta (Node node) =
     Node
@@ -272,9 +308,7 @@ rotateZ delta (Node node) =
 
 
 type alias Context =
-    { dt : Float
-    , time : Float
-    }
+    Elm3d.Context.Context
 
 
 withOnUpdate : (Context -> Node -> Node) -> Node -> Node
