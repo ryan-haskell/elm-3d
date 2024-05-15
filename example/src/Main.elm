@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Elm3d.Camera exposing (Camera)
+import Elm3d.Camera
 import Elm3d.Camera.Isometric
 import Elm3d.Color exposing (Color)
 import Elm3d.Context
@@ -8,20 +8,35 @@ import Elm3d.Float
 import Elm3d.Input.Event
 import Elm3d.Input.Key as Key exposing (Key(..))
 import Elm3d.Isometric
-import Elm3d.Node exposing (Node)
+import Elm3d.Node
 import Elm3d.Program exposing (Program)
 import Elm3d.Rotation
 import Elm3d.Texture exposing (Texture)
 import Elm3d.Vector2 exposing (Vector2)
 import Elm3d.Vector3 exposing (Vector3)
 import Elm3d.Viewport
+import Html exposing (Html)
 
 
-main : Program
+type alias Flags =
+    ()
+
+
+type alias Node =
+    Elm3d.Node.Node Model Msg
+
+
+type alias Camera =
+    Elm3d.Camera.Camera Model Msg
+
+
+main : Program Model Msg
 main =
     Elm3d.Program.new
-        { viewport = Elm3d.Viewport.fullscreenAspect (16 / 9)
-        , background = Elm3d.Color.transparent
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
         , camera = camera
         , nodes =
             [ ground
@@ -31,6 +46,47 @@ main =
             , beardedGuy
             ]
         }
+
+
+type alias Model =
+    { zoom : Int }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    ( { zoom = 8 }
+    , Cmd.none
+    )
+
+
+type Msg
+    = Zoom Int
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Zoom delta ->
+            ( { model
+                | zoom =
+                    (model.zoom + delta)
+                        |> clamp 4 12
+              }
+            , Cmd.none
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+view : Model -> Elm3d.Program.View Msg
+view model =
+    { viewport = Elm3d.Viewport.fullscreenAspect (16 / 9)
+    , background = Elm3d.Color.transparent
+    , hud = Html.text ""
+    }
 
 
 
@@ -158,7 +214,7 @@ cameraPanSpeed =
     1.5
 
 
-onCameraUpdate : Elm3d.Node.Context -> Camera -> Camera
+onCameraUpdate : Elm3d.Node.Context Model -> Camera -> ( Camera, Cmd Msg )
 onCameraUpdate ctx cam =
     let
         input : Vector2
@@ -181,7 +237,7 @@ onCameraUpdate ctx cam =
             else
                 8
     in
-    cam
+    ( cam
         |> Elm3d.Camera.Isometric.move input
         |> Elm3d.Camera.withSize
             (Elm3d.Float.lerp
@@ -190,6 +246,8 @@ onCameraUpdate ctx cam =
                 , step = ctx.dt * 10
                 }
             )
+    , Cmd.none
+    )
 
 
 
@@ -211,7 +269,7 @@ playerMoveSpeed =
     1.5
 
 
-onPlayerUpdate : Elm3d.Node.Context -> Node -> Node
+onPlayerUpdate : Elm3d.Node.Context Model -> Node -> ( Node, Cmd Msg )
 onPlayerUpdate ctx node =
     let
         input : Elm3d.Vector2.Vector2
@@ -252,20 +310,24 @@ onPlayerUpdate ctx node =
                             }
                         )
     in
-    node
+    ( node
         |> Elm3d.Node.moveX offset.x
         |> Elm3d.Node.moveZ offset.y
         |> withWalkingAnimation
+    , Cmd.none
+    )
 
 
 
 -- VILLAGERS & STUFF
 
 
-swayBackAndForth : Elm3d.Node.Context -> Node -> Node
+swayBackAndForth : Elm3d.Node.Context Model -> Node -> ( Node, Cmd Msg )
 swayBackAndForth { time } node =
-    node
+    ( node
         |> Elm3d.Node.withRotationZ (0.05 * cos (12 * time))
+    , Cmd.none
+    )
 
 
 bounceHeight : Float
@@ -273,7 +335,7 @@ bounceHeight =
     0.05
 
 
-runInACircle : Elm3d.Node.Context -> Node -> Node
+runInACircle : Elm3d.Node.Context Model -> Node -> ( Node, Cmd Msg )
 runInACircle { time } node =
     let
         radius : Float
@@ -286,9 +348,11 @@ runInACircle { time } node =
                 (abs (bounceHeight * cos (12 * time)))
                 (radius * cos time)
     in
-    node
+    ( node
         |> Elm3d.Node.withPosition newPosition
         |> Elm3d.Node.withRotationY (time + pi / 2)
+    , Cmd.none
+    )
 
 
 toVillager : { name : String } -> Node

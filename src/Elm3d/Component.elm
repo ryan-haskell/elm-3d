@@ -1,19 +1,19 @@
 module Elm3d.Component exposing
-    ( Props
+    ( Component, Props, View
     , Model, init
     , Msg, update, subscriptions
     , view
-    , toWindowSize
+    , toWindowSize, toUserModel
     )
 
 {-|
 
-@docs Props
+@docs Component, Props, View
 @docs Model, init
 @docs Msg, update, subscriptions
 @docs view
 
-@docs toWindowSize
+@docs toWindowSize, toUserModel
 
 -}
 
@@ -36,34 +36,61 @@ import Task
 import WebGL
 
 
-type Model
+type Model model msg
     = Model
         { time : Float
         , window : ( Int, Int )
-        , background : Color
-        , camera : Camera
-        , nodes : List Node
+        , camera : Camera model msg
+        , nodes : List (Node model msg)
         , input : Elm3d.Input.Model
         , assets : Elm3d.Asset.Model
         , fps : FixedSet Float
+        , model : model
+        , update : msg -> model -> ( model, Cmd msg )
+        , subscriptions : model -> Sub msg
+        , view : model -> View msg
         }
 
 
-toWindowSize : Model -> ( Int, Int )
+toUserModel : Model model msg -> model
+toUserModel (Model model) =
+    model.model
+
+
+toWindowSize : Model model msg -> ( Int, Int )
 toWindowSize (Model model) =
     model.window
 
 
-type alias Props =
-    { background : Color
-    , camera : Elm3d.Camera.Camera
-    , nodes : List Node
+type alias Component flags model msg =
+    { init : Props model msg -> flags -> ( model, Cmd msg )
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
+    , view : model -> View msg
     }
 
 
-init : Props -> () -> ( Model, Cmd Msg )
-init { background, camera, nodes } _ =
+type alias Props model msg =
+    { camera : Camera model msg
+    , nodes : List (Node model msg)
+    }
+
+
+type alias View msg =
+    { background : Color
+    , hud : Html msg
+    }
+
+
+init : Props model msg -> Component flags model msg -> flags -> ( Model model msg, Cmd (Msg msg) )
+init props component flags =
     let
+        ( model, userCmd ) =
+            component.init props flags
+
+        { camera, nodes } =
+            props
+
         objFileUrls : List String
         objFileUrls =
             List.concatMap Elm3d.Node.toObjFileUrls nodes
@@ -74,17 +101,21 @@ init { background, camera, nodes } _ =
     ( Model
         { time = 0.0
         , window = ( 0, 0 )
-        , background = background
         , camera = camera
         , nodes = nodes
         , input = Elm3d.Input.init
         , assets = assets
         , fps = FixedSet.init { maxSize = 30 }
+        , model = model
+        , update = component.update
+        , subscriptions = component.subscriptions
+        , view = component.view
         }
     , Cmd.batch
         [ Browser.Dom.getViewport
             |> Task.perform Viewport
         , Cmd.map Asset assetCmd
+        , Cmd.map User userCmd
         ]
     )
 
@@ -93,7 +124,7 @@ init { background, camera, nodes } _ =
 -- UPDATE
 
 
-type Msg
+type Msg msg
     = Frame Float
     | Viewport Browser.Dom.Viewport
     | Resize Int Int
@@ -101,11 +132,18 @@ type Msg
     | Asset Elm3d.Asset.Msg
     | Focus Browser.Events.Visibility
     | ContextMenu
+    | User msg
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg msg -> Model model msg -> ( Model model msg, Cmd (Msg msg) )
 update msg (Model model) =
     case msg of
+        User msg_ ->
+            -- TODO
+            ( Model model
+            , Cmd.none
+            )
+
         ContextMenu ->
             ( Model model
             , Cmd.none
@@ -132,21 +170,30 @@ update msg (Model model) =
                 time =
                     model.time + dt
 
-                ctx : Elm3d.Node.Context
+                ctx : Elm3d.Node.Context model
                 ctx =
                     { dt = dt
                     , time = time
                     , input = model.input
+                    , model = model.model
                     }
+
+                ( camera, cmd ) =
+                    Elm3d.Camera.update ctx model.camera
+
+                nodesAndCmds =
+                    List.map (Elm3d.Node.update ctx) model.nodes
             in
             ( Model
                 { model
                     | time = time
-                    , camera = Elm3d.Camera.update ctx model.camera
-                    , nodes = List.map (Elm3d.Node.update ctx) model.nodes
+                    , camera = camera
+                    , nodes = List.map Tuple.first nodesAndCmds
                     , fps = FixedSet.insert dt model.fps
                 }
-            , Cmd.none
+            , Cmd.batch
+                (cmd :: List.map Tuple.second nodesAndCmds)
+                |> Cmd.map User
             )
 
         Viewport { scene } ->
@@ -176,30 +223,36 @@ update msg (Model model) =
                     Elm3d.Input.update
                         { event = internalEvent }
                         model.input
-
-                ( newNodes, newCamera ) =
-                    case maybeEvent of
-                        Just event ->
-                            ( List.map (Elm3d.Node.onInput event) model.nodes
-                            , Elm3d.Camera.onInput event model.camera
-                            )
-
-                        Nothing ->
-                            ( model.nodes
-                            , model.camera
-                            )
             in
-            ( Model
-                { model
-                    | input = input
-                    , camera = newCamera
-                    , nodes = newNodes
-                }
-            , Cmd.none
-            )
+            case maybeEvent of
+                Just event ->
+                    let
+                        newNodesAndCmds =
+                            List.map (Elm3d.Node.onInput event) model.nodes
+
+                        ( newCamera, cameraCmd ) =
+                            Elm3d.Camera.onInput event model.camera
+
+                        newNodes =
+                            List.map Tuple.first newNodesAndCmds
+                    in
+                    ( Model
+                        { model
+                            | input = input
+                            , camera = newCamera
+                            , nodes = newNodes
+                        }
+                    , Cmd.batch (cameraCmd :: List.map Tuple.second newNodesAndCmds)
+                        |> Cmd.map User
+                    )
+
+                Nothing ->
+                    ( Model { model | input = input }
+                    , Cmd.none
+                    )
 
 
-subscriptions : Model -> Sub Msg
+subscriptions : Model model msg -> Sub (Msg msg)
 subscriptions model =
     Sub.batch
         [ if hasAnyUpdateNodes model then
@@ -213,24 +266,27 @@ subscriptions model =
         ]
 
 
-hasAnyUpdateNodes : Model -> Bool
+hasAnyUpdateNodes : Model model msg -> Bool
 hasAnyUpdateNodes (Model model) =
     Elm3d.Camera.hasUpdateFunction model.camera
         || List.any Elm3d.Node.hasUpdateFunction model.nodes
 
 
-view : ( Int, Int ) -> Model -> Html Msg
+view : ( Int, Int ) -> Model model msg -> Html (Msg msg)
 view size (Model model) =
     let
+        { hud, background } =
+            model.view model.model
+
         ( width, height ) =
             size
 
-        directionalLight : Maybe Node
+        directionalLight : Maybe (Node model msg)
         directionalLight =
             model.nodes
                 |> List.Extra.find Elm3d.Node.isDirectionalLight
 
-        viewCanvas : Html msg
+        viewCanvas : Html (Msg msg)
         viewCanvas =
             model.nodes
                 |> List.concatMap
@@ -247,11 +303,11 @@ view size (Model model) =
                     ]
                     [ Html.Attributes.width width
                     , Html.Attributes.height height
-                    , Html.Attributes.style "background-color" (Elm3d.Color.toHtmlColor model.background)
+                    , Html.Attributes.style "background-color" (Elm3d.Color.toHtmlColor background)
                     , Html.Attributes.style "transform-origin" "top left"
                     ]
 
-        viewFps : Html msg
+        viewFps : Html (Msg msg)
         viewFps =
             Html.div
                 [ Html.Attributes.style "position" "fixed"
@@ -284,5 +340,6 @@ view size (Model model) =
             )
         ]
         [ viewCanvas
+        , hud |> Html.map User
         , viewFps
         ]

@@ -1,41 +1,75 @@
-module Elm3d.Program exposing (Program, new)
+module Elm3d.Program exposing (Program, View, new)
 
 import Browser
-import Elm3d.Camera
+import Elm3d.Camera exposing (Camera)
 import Elm3d.Color exposing (Color)
-import Elm3d.Component exposing (Model, Msg)
+import Elm3d.Component exposing (Component, Model, Msg, Props)
 import Elm3d.Node exposing (Node)
 import Elm3d.Viewport exposing (Viewport)
 import Html exposing (Html)
 import Html.Attributes
 
 
-type alias Program =
-    Platform.Program () Model Msg
+type alias Program model msg =
+    Platform.Program () (Model model msg) (Msg msg)
+
+
+type alias View msg =
+    { viewport : Viewport
+    , background : Color
+    , hud : Html msg
+    }
 
 
 new :
-    { background : Color
-    , viewport : Viewport
-    , camera : Elm3d.Camera.Camera
-    , nodes : List Node
+    { init : () -> ( model, Cmd msg )
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
+    , camera : Camera model msg
+    , nodes : List (Node model msg)
+    , view : model -> View msg
     }
-    -> Program
-new props =
-    Browser.element
-        { init =
+    -> Program model msg
+new program =
+    let
+        component : Component () model msg
+        component =
+            { init = \props () -> program.init ()
+            , update = program.update
+            , subscriptions = program.subscriptions
+            , view =
+                \model ->
+                    let
+                        { background, hud } =
+                            program.view model
+                    in
+                    { background = background, hud = hud }
+            }
+
+        init : () -> ( Model model msg, Cmd (Msg msg) )
+        init flags =
             Elm3d.Component.init
-                { background = props.background
-                , camera = props.camera
-                , nodes = props.nodes
+                { camera = program.camera
+                , nodes = program.nodes
                 }
+                component
+                flags
+    in
+    Browser.element
+        { init = init
         , update = Elm3d.Component.update
         , subscriptions = Elm3d.Component.subscriptions
-        , view = view props.viewport
+        , view =
+            \bigModel ->
+                let
+                    { viewport } =
+                        program.view (Elm3d.Component.toUserModel bigModel)
+                in
+                view viewport bigModel
         }
 
 
-view : Viewport -> Model -> Html Msg
+view : Viewport -> Model model msg -> Html (Msg msg)
 view viewport model =
     let
         size : ( Int, Int )
