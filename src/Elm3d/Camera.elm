@@ -1,21 +1,20 @@
 module Elm3d.Camera exposing
     ( Camera
-    , orthographic, perspective
-    , withIsometricTransform
+    , orthographic, perspective, isometric
     , withOnUpdate, withOnInput
     , withPosition, withRotation
     , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
     , moveX, moveY, moveZ
     , rotateX, rotateY, rotateZ
-    , toMatrix4, hasUpdateFunction, update, onInput
+    , toMatrix4, toOffset, hasUpdateFunction, update, onInput, withFov, withSize, withNear, withFar, withAngle, withIsometricRotation, withDistance, withOffset
+    , toIsometricProps
     )
 
 {-|
 
 @docs Camera
-@docs orthographic, perspective
-@docs withIsometricTransform
+@docs orthographic, perspective, isometric
 
 @docs withOnUpdate, withOnInput
 
@@ -26,9 +25,24 @@ module Elm3d.Camera exposing
 @docs rotateX, rotateY, rotateZ
 
 
-### Internals
+### Elm3d.Camera.Perspective
 
-@docs toMatrix4, hasUpdateFunction, update, onInput
+docs withFov, withNear, withFar
+
+
+### Elm3d.Camera.Orthographic
+
+docs withSize, withNear, withFar
+
+
+### Elm3d.Camera.Isometric
+
+docs withFov, withSize, withNear, withFar, withAngle, withRotation, withDistance, withOffset
+
+
+### Elm3d.Internals.Camera
+
+@docs toMatrix4, toOffset, hasUpdateFunction, update, onInput, withFov, withSize, withNear, withFar, withAngle, withIsometricRotation, withDistance, withOffset
 
 -}
 
@@ -63,11 +77,7 @@ orthographic :
     }
     -> Camera
 orthographic props =
-    Camera
-        (Elm3d.Node.camera
-            { projection = Orthographic props
-            }
-        )
+    Camera (Elm3d.Node.camera { projection = Orthographic props })
 
 
 perspective :
@@ -77,52 +87,37 @@ perspective :
     }
     -> Camera
 perspective props =
-    Camera
-        (Elm3d.Node.camera
-            { projection = Perspective props
-            }
-        )
+    Camera (Elm3d.Node.camera { projection = Perspective props })
 
 
-
--- ISOMETRIC
-
-
-withIsometricTransform :
-    { horizontalAngle : Float
-    , verticalAngle : Float
+isometric :
+    { size : Float
+    , angle : Float
+    , rotation : Float
     , distance : Float
-    , offset : Elm3d.Vector2.Vector2
+    , near : Float
+    , far : Float
+    , offset : Vector2
     }
     -> Camera
-    -> Camera
-withIsometricTransform props camera =
-    let
-        isometricVector : Vector2
-        isometricVector =
-            Elm3d.Isometric.toOffsetVector
-                { angle = props.horizontalAngle
-                , input = props.offset
-                }
+isometric props =
+    Camera (Elm3d.Node.camera { projection = Isometric props })
 
-        ( dx, dz ) =
-            ( Elm3d.Vector2.x isometricVector
-            , Elm3d.Vector2.y isometricVector
-            )
-    in
-    camera
-        |> withRotationX -props.verticalAngle
-        |> withRotationY props.horizontalAngle
-        |> withPosition
-            (if props.verticalAngle >= pi / 2 then
-                Elm3d.Vector3.new 0 props.distance 0
 
-             else
-                Elm3d.Vector3.new
-                    (props.distance * sin props.horizontalAngle + dx)
-                    (props.distance * tan props.verticalAngle)
-                    (props.distance * cos props.horizontalAngle + dz)
-            )
+toIsometricProps : Camera -> Maybe Elm3d.Camera.Projection.IsometricProps
+toIsometricProps (Camera node) =
+    case Elm3d.Node.toCameraProjection node of
+        Nothing ->
+            Nothing
+
+        Just (Isometric props) ->
+            Just props
+
+        Just (Orthographic props) ->
+            Nothing
+
+        Just (Perspective props) ->
+            Nothing
 
 
 
@@ -244,61 +239,91 @@ withOnInput fn (Camera node) =
         )
 
 
+withSize : Float -> Camera -> Camera
+withSize props (Camera node) =
+    updateProjection node
+        (\projection ->
+            case projection of
+                Orthographic data ->
+                    Orthographic { data | size = props }
+
+                Isometric data ->
+                    Isometric { data | size = props }
+
+                Perspective _ ->
+                    projection
+        )
+
+
+withFov : Float -> Camera -> Camera
+withFov props (Camera node) =
+    onlyForPerspective node (\data -> { data | fov = props })
+
+
+withNear : Float -> Camera -> Camera
+withNear props (Camera node) =
+    updateProjection node
+        (\projection ->
+            case projection of
+                Orthographic data ->
+                    Orthographic { data | near = props }
+
+                Perspective data ->
+                    Perspective { data | near = props }
+
+                Isometric data ->
+                    Isometric { data | near = props }
+        )
+
+
+withFar : Float -> Camera -> Camera
+withFar props (Camera node) =
+    updateProjection node
+        (\projection ->
+            case projection of
+                Orthographic data ->
+                    Orthographic { data | far = props }
+
+                Perspective data ->
+                    Perspective { data | far = props }
+
+                Isometric data ->
+                    Isometric { data | far = props }
+        )
+
+
+withAngle : Float -> Camera -> Camera
+withAngle props (Camera node) =
+    onlyForIsometric node (\data -> { data | angle = props })
+
+
+withIsometricRotation : Float -> Camera -> Camera
+withIsometricRotation props (Camera node) =
+    onlyForIsometric node (\data -> { data | rotation = props })
+
+
+withDistance : Float -> Camera -> Camera
+withDistance props (Camera node) =
+    onlyForIsometric node (\data -> { data | distance = props })
+
+
+withOffset : Vector2 -> Camera -> Camera
+withOffset props (Camera node) =
+    onlyForIsometric node (\data -> { data | offset = props })
+
+
 toMatrix4 : ( Int, Int ) -> Camera -> Matrix4
 toMatrix4 window (Camera node) =
     case Elm3d.Node.toCameraProjection node of
         Just projection ->
-            let
-                transform : Transform3d
-                transform =
-                    Elm3d.Node.toTransform3d node
-
-                { x, y, z } =
-                    Elm3d.Transform3d.toPosition transform
-                        |> Math.Vector3.toRecord
-
-                rx =
-                    Elm3d.Transform3d.toRotationX transform
-
-                ry =
-                    Elm3d.Transform3d.toRotationY transform
-
-                rz =
-                    Elm3d.Transform3d.toRotationZ transform
-
-                applyTransform : Matrix4 -> Matrix4
-                applyTransform mat4 =
-                    mat4
-                        -- Scale has no effect on the camera
-                        |> Math.Matrix4.rotate -rx Elm3d.Vector3.positiveX
-                        |> Math.Matrix4.rotate -ry Elm3d.Vector3.positiveY
-                        |> Math.Matrix4.rotate -rz Elm3d.Vector3.positiveZ
-                        |> Math.Matrix4.translate3 -x -y -z
-            in
             case projection of
-                Orthographic { size, near, far } ->
-                    let
-                        ( width, height ) =
-                            Tuple.mapBoth
-                                Basics.toFloat
-                                Basics.toFloat
-                                window
+                Orthographic props ->
+                    toOrthographicCamera window props
+                        |> applyTransform node
 
-                        aspect =
-                            width / height
-                    in
-                    Math.Matrix4.makeOrtho
-                        -(size / 2)
-                        (size / 2)
-                        -(size / aspect / 2)
-                        (size / aspect / 2)
-                        near
-                        far
-                        -- Scale has no effect on the camera
-                        |> Math.Matrix4.rotate -rx Elm3d.Vector3.positiveX
-                        |> Math.Matrix4.rotate -ry Elm3d.Vector3.positiveY
-                        |> Math.Matrix4.rotate -rz Elm3d.Vector3.positiveZ
-                        |> Math.Matrix4.translate3 -x -y -z
+                Isometric props ->
+                    toOrthographicCamera window props
+                        |> applyIsometricTransform props
 
                 Perspective { fov, near, far } ->
                     let
@@ -312,11 +337,149 @@ toMatrix4 window (Camera node) =
                             width / height
                     in
                     Math.Matrix4.makePerspective fov aspect near far
-                        -- Scale has no effect on the camera
-                        |> Math.Matrix4.rotate -rx Elm3d.Vector3.positiveX
-                        |> Math.Matrix4.rotate -ry Elm3d.Vector3.positiveY
-                        |> Math.Matrix4.rotate -rz Elm3d.Vector3.positiveZ
-                        |> Math.Matrix4.translate3 -x -y -z
+                        |> applyTransform node
 
         Nothing ->
             Math.Matrix4.identity
+
+
+toOrthographicCamera : ( Int, Int ) -> { props | size : Float, near : Float, far : Float } -> Matrix4
+toOrthographicCamera window { size, near, far } =
+    let
+        ( width, height ) =
+            Tuple.mapBoth Basics.toFloat Basics.toFloat window
+
+        half =
+            size / 2
+
+        aspect =
+            width / height
+    in
+    Math.Matrix4.makeOrtho
+        -half
+        half
+        (-half / aspect)
+        (half / aspect)
+        near
+        far
+
+
+updateProjection : Elm3d.Node.Node -> (Projection -> Projection) -> Camera
+updateProjection node toProjection =
+    case Elm3d.Node.toCameraProjection node of
+        Nothing ->
+            Camera node
+
+        Just projection ->
+            Camera (Elm3d.Node.updateProjection (toProjection projection) node)
+
+
+onlyForPerspective :
+    Elm3d.Node.Node
+    -> (Elm3d.Camera.Projection.PerspectiveProps -> Elm3d.Camera.Projection.PerspectiveProps)
+    -> Camera
+onlyForPerspective node toProps =
+    updateProjection node
+        (\projection ->
+            case projection of
+                Perspective data ->
+                    Perspective (toProps data)
+
+                _ ->
+                    projection
+        )
+
+
+onlyForIsometric :
+    Elm3d.Node.Node
+    -> (Elm3d.Camera.Projection.IsometricProps -> Elm3d.Camera.Projection.IsometricProps)
+    -> Camera
+onlyForIsometric node toProps =
+    updateProjection node
+        (\projection ->
+            case projection of
+                Isometric data ->
+                    Isometric (toProps data)
+
+                _ ->
+                    projection
+        )
+
+
+
+-- Transforming the camera
+
+
+applyIsometricTransform : Elm3d.Camera.Projection.IsometricProps -> Matrix4 -> Matrix4
+applyIsometricTransform props mat4 =
+    let
+        isometricVector : Vector2
+        isometricVector =
+            Elm3d.Isometric.toOffsetVector
+                { angle = props.rotation
+                , input = props.offset
+                }
+
+        ( dx, dz ) =
+            ( Elm3d.Vector2.x isometricVector
+            , Elm3d.Vector2.y isometricVector
+            )
+    in
+    mat4
+        |> Math.Matrix4.rotate props.angle Elm3d.Vector3.positiveX
+        |> Math.Matrix4.rotate -props.rotation Elm3d.Vector3.positiveY
+        |> Math.Matrix4.translate
+            (if props.angle >= pi / 2 then
+                Elm3d.Vector3.new 0 -props.distance 0
+
+             else
+                Elm3d.Vector3.new
+                    (props.distance * sin props.rotation + dx)
+                    (props.distance * tan props.angle)
+                    (props.distance * cos props.rotation + dz)
+                    |> Math.Vector3.negate
+            )
+
+
+applyTransform : Node -> Matrix4 -> Matrix4
+applyTransform node mat4 =
+    let
+        transform : Transform3d
+        transform =
+            Elm3d.Node.toTransform3d node
+
+        { x, y, z } =
+            Elm3d.Transform3d.toPosition transform
+                |> Math.Vector3.toRecord
+
+        rx =
+            Elm3d.Transform3d.toRotationX transform
+
+        ry =
+            Elm3d.Transform3d.toRotationY transform
+
+        rz =
+            Elm3d.Transform3d.toRotationZ transform
+    in
+    mat4
+        -- Scale has no effect on the camera
+        |> Math.Matrix4.rotate -rx Elm3d.Vector3.positiveX
+        |> Math.Matrix4.rotate -ry Elm3d.Vector3.positiveY
+        |> Math.Matrix4.rotate -rz Elm3d.Vector3.positiveZ
+        |> Math.Matrix4.translate3 -x -y -z
+
+
+toOffset : Camera -> Vector2
+toOffset (Camera node) =
+    case Elm3d.Node.toCameraProjection node of
+        Nothing ->
+            Elm3d.Vector2.zero
+
+        Just (Isometric props) ->
+            props.offset
+
+        Just (Orthographic _) ->
+            Elm3d.Vector2.zero
+
+        Just (Perspective _) ->
+            Elm3d.Vector2.zero

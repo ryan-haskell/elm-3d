@@ -1,8 +1,10 @@
 module Main exposing (main)
 
 import Elm3d.Camera exposing (Camera)
+import Elm3d.Camera.Isometric
 import Elm3d.Color exposing (Color)
 import Elm3d.Context
+import Elm3d.Float
 import Elm3d.Input.Event
 import Elm3d.Input.Key as Key exposing (Key(..))
 import Elm3d.Isometric
@@ -23,9 +25,9 @@ main =
         , camera = camera
         , nodes =
             [ ground
+            , trees
             , ladyRunningAroundTavern
             , church
-            , trees
             , beardedGuy
             ]
         }
@@ -60,13 +62,18 @@ ground =
 ladyRunningAroundTavern : Node
 ladyRunningAroundTavern =
     Elm3d.Node.group
-        [ Elm3d.Node.obj
-            { url = "/assets/medieval_hexagon/building_tavern_blue.obj"
-            }
+        [ tavern
         , runningLady
         ]
         |> Elm3d.Node.withPositionX -3
         |> Elm3d.Node.withPositionZ -8
+
+
+tavern : Node
+tavern =
+    Elm3d.Node.obj
+        { url = "/assets/medieval_hexagon/building_tavern_blue.obj"
+        }
 
 
 runningLady : Node
@@ -118,7 +125,7 @@ toTreeNode offset =
     Elm3d.Node.obj
         { url = "/assets/medieval_hexagon/trees_A_large.obj"
         }
-        |> Elm3d.Node.withScale (Elm3d.Vector3.new 8 8 8)
+        |> Elm3d.Node.withScale (Elm3d.Vector3.fromFloat 8)
         |> Elm3d.Node.withPositionX (16 * cos angle)
         |> Elm3d.Node.withPositionZ (16 * sin angle)
 
@@ -129,17 +136,15 @@ toTreeNode offset =
 
 camera : Camera
 camera =
-    Elm3d.Camera.orthographic
-        { size = 10
+    Elm3d.Camera.Isometric.new
+        { size = 8
         , near = 0.01
         , far = 1000
+        , rotation = cameraRotation
+        , angle = pi / 6
+        , distance = 100
+        , offset = Elm3d.Vector2.new -2 5
         }
-        |> Elm3d.Camera.withIsometricTransform
-            { horizontalAngle = cameraRotation
-            , verticalAngle = pi / 6
-            , distance = 100
-            , offset = Elm3d.Vector2.new -1 1
-            }
         |> Elm3d.Camera.withOnUpdate onCameraUpdate
 
 
@@ -162,23 +167,29 @@ onCameraUpdate ctx cam =
                 { x = ( Key.KEY_A, Key.KEY_D )
                 , y = ( Key.KEY_S, Key.KEY_W )
                 }
+                |> Elm3d.Vector2.scale (ctx.dt * cameraPanSpeed)
 
-        offset =
-            if Elm3d.Vector2.length input == 0 then
-                { x = 0, y = 0 }
+        isMousePressed : Bool
+        isMousePressed =
+            Elm3d.Context.isLeftClickPressed ctx
+
+        targetSize : Float
+        targetSize =
+            if isMousePressed then
+                4
 
             else
-                Elm3d.Isometric.toOffsetVector
-                    { angle = cameraRotation
-                    , input = input
-                    }
-                    |> Elm3d.Vector2.normalize
-                    |> Elm3d.Vector2.scale (ctx.dt * cameraPanSpeed)
-                    |> Elm3d.Vector2.toRecord
+                8
     in
     cam
-        |> Elm3d.Camera.moveX offset.x
-        |> Elm3d.Camera.moveZ offset.y
+        |> Elm3d.Camera.Isometric.move input
+        |> Elm3d.Camera.withSize
+            (Elm3d.Float.lerp
+                { from = Elm3d.Camera.Isometric.size cam
+                , to = targetSize
+                , step = ctx.dt * 10
+                }
+            )
 
 
 
@@ -195,6 +206,7 @@ beardedGuy =
         |> Elm3d.Node.withOnUpdate onPlayerUpdate
 
 
+playerMoveSpeed : Float
 playerMoveSpeed =
     1.5
 
@@ -208,40 +220,34 @@ onPlayerUpdate ctx node =
                 { x = ( KEY_ARROW_LEFT, KEY_ARROW_RIGHT )
                 , y = ( KEY_ARROW_DOWN, KEY_ARROW_UP )
                 }
+                |> Elm3d.Vector2.scale (ctx.dt * playerMoveSpeed)
 
         offset : { x : Float, y : Float }
         offset =
             if Elm3d.Vector2.length input == 0 then
-                { x = 0, y = 0 }
+                { x = 0
+                , y = 0
+                }
 
             else
                 Elm3d.Isometric.toOffsetVector
                     { angle = cameraRotation
                     , input = input
                     }
-                    |> Elm3d.Vector2.normalize
-                    |> Elm3d.Vector2.scale (ctx.dt * playerMoveSpeed)
                     |> Elm3d.Vector2.toRecord
 
-        applyMovementTransformations : Node -> Node
-        applyMovementTransformations player =
+        withWalkingAnimation : Node -> Node
+        withWalkingAnimation player =
             if Elm3d.Vector2.length input == 0 then
                 player
 
             else
-                let
-                    currentAngle =
-                        Elm3d.Node.toRotationY player
-
-                    targetAngle =
-                        atan2 offset.x offset.y
-                in
                 player
                     |> Elm3d.Node.withPositionY (abs (bounceHeight * cos (12 * ctx.time)))
                     |> Elm3d.Node.withRotationY
                         (Elm3d.Rotation.lerp
-                            { from = currentAngle
-                            , to = targetAngle
+                            { from = Elm3d.Node.toRotationY player
+                            , to = atan2 offset.x offset.y
                             , step = ctx.dt * 10
                             }
                         )
@@ -249,7 +255,7 @@ onPlayerUpdate ctx node =
     node
         |> Elm3d.Node.moveX offset.x
         |> Elm3d.Node.moveZ offset.y
-        |> applyMovementTransformations
+        |> withWalkingAnimation
 
 
 
@@ -270,19 +276,15 @@ bounceHeight =
 runInACircle : Elm3d.Node.Context -> Node -> Node
 runInACircle { time } node =
     let
-        churchPos =
-            { x = 0
-            , z = 0
-            }
-
-        distance =
+        radius : Float
+        radius =
             0.9
 
         newPosition =
             Elm3d.Vector3.new
-                (distance * sin time + churchPos.x)
+                (radius * sin time)
                 (abs (bounceHeight * cos (12 * time)))
-                (distance * cos time + churchPos.z)
+                (radius * cos time)
     in
     node
         |> Elm3d.Node.withPosition newPosition

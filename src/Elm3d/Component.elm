@@ -29,6 +29,8 @@ import Elm3d.Node exposing (Node)
 import FixedSet exposing (FixedSet)
 import Html exposing (Html)
 import Html.Attributes
+import Html.Events
+import Json.Decode
 import List.Extra
 import Task
 import WebGL
@@ -98,11 +100,17 @@ type Msg
     | Input Elm3d.Input.RawEvent
     | Asset Elm3d.Asset.Msg
     | Focus Browser.Events.Visibility
+    | ContextMenu
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model model) =
     case msg of
+        ContextMenu ->
+            ( Model model
+            , Cmd.none
+            )
+
         Asset assetsMsg ->
             let
                 ( assets, assetsCmd ) =
@@ -158,10 +166,6 @@ update msg (Model model) =
             )
 
         Focus _ ->
-            let
-                _ =
-                    Debug.log "Hi"
-            in
             ( Model { model | input = Elm3d.Input.releaseAllKeys model.input }
             , Cmd.none
             )
@@ -270,7 +274,15 @@ view size (Model model) =
                         Html.text ""
                 ]
     in
-    Html.div []
+    Html.div
+        [ Html.Events.custom "contextmenu"
+            (Json.Decode.succeed
+                { message = ContextMenu
+                , stopPropagation = True
+                , preventDefault = True
+                }
+            )
+        ]
         [ viewCanvas
         , viewFps
         ]

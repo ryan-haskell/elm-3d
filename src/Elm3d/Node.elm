@@ -12,7 +12,7 @@ module Elm3d.Node exposing
     , withOnInput
     , toPosition, toRotation, toScale
     , toRotationX, toRotationY, toRotationZ
-    , toEntity, update, toObjFileUrls, onInput, camera, hasUpdateFunction, toCameraProjection, toTransform3d, isDirectionalLight
+    , toEntity, update, toObjFileUrls, onInput, camera, hasUpdateFunction, updateProjection, toCameraProjection, toTransform3d, isDirectionalLight
     )
 
 {-|
@@ -52,7 +52,7 @@ module Elm3d.Node exposing
 
 ### TODO: Elm3d.Internals.Node
 
-@docs toEntity, update, toObjFileUrls, onInput, camera, hasUpdateFunction, toCameraProjection, toTransform3d, isDirectionalLight
+@docs toEntity, update, toObjFileUrls, onInput, camera, hasUpdateFunction, updateProjection, toCameraProjection, toTransform3d, isDirectionalLight
 
 -}
 
@@ -107,6 +107,16 @@ toCameraProjection (Node node) =
 
         _ ->
             Nothing
+
+
+updateProjection : Projection -> Node -> Node
+updateProjection projection (Node node) =
+    case node.kind of
+        Camera _ ->
+            Node { node | kind = Camera { projection = projection } }
+
+        _ ->
+            Node node
 
 
 cube :
