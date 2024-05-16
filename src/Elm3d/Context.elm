@@ -10,27 +10,26 @@ import Elm3d.Input.Key exposing (Key)
 import Elm3d.Vector2 exposing (Vector2)
 
 
-type alias Context model =
+type alias Context =
     { dt : Float
     , time : Float
     , input : Elm3d.Input.Model
-    , model : model
     }
 
 
-isKeyPressed : Key -> Context model -> Bool
+isKeyPressed : Key -> Context -> Bool
 isKeyPressed key ctx =
     Elm3d.Input.isKeyPressed ctx.input key
 
 
-isLeftClickPressed : Context model -> Bool
+isLeftClickPressed : Context -> Bool
 isLeftClickPressed ctx =
     Elm3d.Input.isLeftClickPressed ctx.input
 
 
 {-| Commonly used when working with directional user input
 -}
-toInputAxis : Context model -> { x : ( Key, Key ), y : ( Key, Key ) } -> Vector2
+toInputAxis : Context -> { x : ( Key, Key ), y : ( Key, Key ) } -> Vector2
 toInputAxis ctx keys =
     let
         ( keyLeft, keyRight ) =

@@ -6,8 +6,8 @@ import Elm3d.Vector2 exposing (Vector2)
 import Math.Vector2
 
 
-type alias Camera model msg =
-    Elm3d.Camera.Camera model msg
+type alias Camera msg =
+    Elm3d.Camera.Camera msg
 
 
 new :
@@ -19,12 +19,12 @@ new :
     , far : Float
     , offset : Vector2
     }
-    -> Camera model msg
+    -> Camera msg
 new props =
     Elm3d.Camera.isometric props
 
 
-move : Vector2 -> Camera model msg -> Camera model msg
+move : Vector2 -> Camera msg -> Camera msg
 move input cam =
     case Elm3d.Camera.toIsometricProps cam of
         Nothing ->
@@ -43,7 +43,7 @@ move input cam =
                         )
 
 
-size : Camera model msg -> Float
+size : Camera msg -> Float
 size cam =
     case Elm3d.Camera.toIsometricProps cam of
         Nothing ->

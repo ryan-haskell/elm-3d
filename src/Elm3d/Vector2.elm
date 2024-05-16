@@ -4,6 +4,7 @@ module Elm3d.Vector2 exposing
     , positiveX, positiveY
     , fromRecord
     , normalize, scale
+    , add, clamp
     , length
     , x, y, toRecord
     )
@@ -17,6 +18,7 @@ module Elm3d.Vector2 exposing
 @docs fromRecord
 
 @docs normalize, scale
+@docs add, clamp
 @docs length
 
 @docs x, y, toRecord
@@ -102,9 +104,35 @@ normalize vec2 =
     Math.Vector2.normalize vec2
 
 
+clamp : Vector2 -> Vector2 -> Vector2 -> Vector2
+clamp minV maxV valueV =
+    let
+        min : { x : Float, y : Float }
+        min =
+            toRecord minV
+
+        max : { x : Float, y : Float }
+        max =
+            toRecord maxV
+
+        val : { x : Float, y : Float }
+        val =
+            toRecord valueV
+    in
+    fromRecord
+        { x = val.x |> Basics.clamp min.x max.x
+        , y = val.y |> Basics.clamp min.y max.y
+        }
+
+
 scale : Float -> Vector2 -> Vector2
 scale constant vec2 =
     Math.Vector2.scale constant vec2
+
+
+add : Vector2 -> Vector2 -> Vector2
+add a b =
+    Math.Vector2.add a b
 
 
 length : Vector2 -> Float

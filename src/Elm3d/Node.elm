@@ -10,8 +10,11 @@ module Elm3d.Node exposing
     , rotateX, rotateY, rotateZ
     , Context, withOnUpdate
     , withOnInput
+    , map
     , toPosition, toRotation, toScale
+    , toPositionX, toPositionY, toPositionZ
     , toRotationX, toRotationY, toRotationZ
+    , toScaleX, toScaleY, toScaleZ
     , toEntity, update, toObjFileUrls, onInput, camera, hasUpdateFunction, updateProjection, toCameraProjection, toTransform3d, isDirectionalLight
     )
 
@@ -40,6 +43,7 @@ module Elm3d.Node exposing
 
 @docs Context, withOnUpdate
 @docs withOnInput
+@docs map
 
 
 ### **Accessing data**
@@ -74,32 +78,99 @@ import WebGL
 import WebGL.Texture
 
 
-type Node model msg
-    = Node (Internals model msg)
+type Node msg
+    = Node (Internals msg)
 
 
-type Kind model msg
+map : { toMsg : a -> b, fromMsg : b -> a } -> Node a -> Node b
+map fns (Node node) =
+    Node (mapInternals fns node)
+
+
+type Kind msg
     = Block { size : Vector3, texture : Texture }
     | Obj { url : String }
-    | Group (List (Node model msg))
+    | Group (List (Node msg))
     | DirectionalLight
     | Camera { projection : Projection }
 
 
-type alias Internals model msg =
-    { kind : Kind model msg
+mapKind : { toMsg : a -> b, fromMsg : b -> a } -> Kind a -> Kind b
+mapKind ({ toMsg } as fns) kind =
+    case kind of
+        Block props ->
+            Block props
+
+        Obj props ->
+            Obj props
+
+        Group children ->
+            Group (List.map (map fns) children)
+
+        DirectionalLight ->
+            DirectionalLight
+
+        Camera props ->
+            Camera props
+
+
+type alias Internals msg =
+    { kind : Kind msg
     , transform : Transform3d
-    , onInput : Maybe (Elm3d.Input.Event.Event -> Node model msg -> ( Node model msg, Cmd msg ))
-    , onUpdate : Maybe (Context model -> Node model msg -> ( Node model msg, Cmd msg ))
+    , onInput : Maybe (Elm3d.Input.Event.Event -> Node msg -> msg)
+    , onUpdate : Maybe (Context -> Node msg -> msg)
     }
 
 
-toTransform3d : Node model msg -> Transform3d
+mapInternals : { toMsg : a -> b, fromMsg : b -> a } -> Internals a -> Internals b
+mapInternals ({ toMsg, fromMsg } as fns) node =
+    { kind = mapKind fns node.kind
+    , transform = node.transform
+    , onInput =
+        case node.onInput of
+            Nothing ->
+                Nothing
+
+            Just onInputNodeA ->
+                let
+                    onInputNodeB : Elm3d.Input.Event.Event -> Node b -> b
+                    onInputNodeB event nodeB =
+                        let
+                            nodeA : Node a
+                            nodeA =
+                                map { toMsg = fromMsg, fromMsg = toMsg } nodeB
+                        in
+                        onInputNodeA event nodeA
+                            |> toMsg
+                in
+                Just onInputNodeB
+    , onUpdate =
+        case node.onUpdate of
+            Nothing ->
+                Nothing
+
+            Just onUpdateNodeA ->
+                let
+                    onUpdateNodeB : Context -> Node b -> b
+                    onUpdateNodeB ctx nodeB =
+                        let
+                            nodeA : Node a
+                            nodeA =
+                                map { toMsg = fromMsg, fromMsg = toMsg } nodeB
+                        in
+                        onUpdateNodeA ctx nodeA
+                            |> toMsg
+                in
+                Just onUpdateNodeB
+    }
+
+
+toTransform3d : Node msg -> Transform3d
 toTransform3d (Node node) =
     node.transform
 
 
-toCameraProjection : Node model msg -> Maybe Projection
+toCameraProjection : Node msg -> Maybe Projection
 toCameraProjection (Node node) =
     case node.kind of
         Camera { projection } ->
@@ -109,7 +180,7 @@ toCameraProjection (Node node) =
             Nothing
 
 
-updateProjection : Projection -> Node model msg -> Node model msg
+updateProjection : Projection -> Node msg -> Node msg
 updateProjection projection (Node node) =
     case node.kind of
         Camera _ ->
@@ -123,7 +194,7 @@ cube :
     { size : Float
     , texture : Texture
     }
-    -> Node model msg
+    -> Node msg
 cube props =
     block
         { size = Elm3d.Vector3.fromFloat props.size
@@ -135,7 +206,7 @@ block :
     { size : Vector3
     , texture : Texture
     }
-    -> Node model msg
+    -> Node msg
 block props =
     Node
         { kind = Block props
@@ -145,7 +216,7 @@ block props =
         }
 
 
-obj : { url : String } -> Node model msg
+obj : { url : String } -> Node msg
 obj props =
     Node
         { kind = Obj props
@@ -155,7 +226,7 @@ obj props =
         }
 
 
-group : List (Node model msg) -> Node model msg
+group : List (Node msg) -> Node msg
 group children =
     Node
         { kind = Group children
@@ -165,7 +236,7 @@ group children =
         }
 
 
-camera : { projection : Projection } -> Node model msg
+camera : { projection : Projection } -> Node msg
 camera props =
     Node
         { kind = Camera props
@@ -175,7 +246,7 @@ camera props =
         }
 
 
-light : { direction : Vector3 } -> Node model msg
+light : { direction : Vector3 } -> Node msg
 light props =
     Node
         { kind = DirectionalLight
@@ -187,67 +258,67 @@ light props =
         }
 
 
-withPosition : Vector3 -> Node model msg -> Node model msg
+withPosition : Vector3 -> Node msg -> Node msg
 withPosition props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withPosition props node.transform }
 
 
-withRotation : Vector3 -> Node model msg -> Node model msg
+withRotation : Vector3 -> Node msg -> Node msg
 withRotation props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withRotation props node.transform }
 
 
-withScale : Vector3 -> Node model msg -> Node model msg
+withScale : Vector3 -> Node msg -> Node msg
 withScale props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withScale props node.transform }
 
 
-withPositionX : Float -> Node model msg -> Node model msg
+withPositionX : Float -> Node msg -> Node msg
 withPositionX props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withPositionX props node.transform }
 
 
-withPositionY : Float -> Node model msg -> Node model msg
+withPositionY : Float -> Node msg -> Node msg
 withPositionY props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withPositionY props node.transform }
 
 
-withPositionZ : Float -> Node model msg -> Node model msg
+withPositionZ : Float -> Node msg -> Node msg
 withPositionZ props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withPositionZ props node.transform }
 
 
-withRotationX : Float -> Node model msg -> Node model msg
+withRotationX : Float -> Node msg -> Node msg
 withRotationX props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withRotationX props node.transform }
 
 
-withRotationY : Float -> Node model msg -> Node model msg
+withRotationY : Float -> Node msg -> Node msg
 withRotationY props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withRotationY props node.transform }
 
 
-withRotationZ : Float -> Node model msg -> Node model msg
+withRotationZ : Float -> Node msg -> Node msg
 withRotationZ props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withRotationZ props node.transform }
 
 
-withScaleX : Float -> Node model msg -> Node model msg
+withScaleX : Float -> Node msg -> Node msg
 withScaleX props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withScaleX props node.transform }
 
 
-withScaleY : Float -> Node model msg -> Node model msg
+withScaleY : Float -> Node msg -> Node msg
 withScaleY props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withScaleY props node.transform }
 
 
-withScaleZ : Float -> Node model msg -> Node model msg
+withScaleZ : Float -> Node msg -> Node msg
 withScaleZ props (Node node) =
     Node { node | transform = Elm3d.Transform3d.withScaleZ props node.transform }
 
 
-moveX : Float -> Node model msg -> Node model msg
+moveX : Float -> Node msg -> Node msg
 moveX delta (Node node) =
     Node
         { node
@@ -258,7 +329,7 @@ moveX delta (Node node) =
         }
 
 
-moveY : Float -> Node model msg -> Node model msg
+moveY : Float -> Node msg -> Node msg
 moveY delta (Node node) =
     Node
         { node
@@ -269,7 +340,7 @@ moveY delta (Node node) =
         }
 
 
-moveZ : Float -> Node model msg -> Node model msg
+moveZ : Float -> Node msg -> Node msg
 moveZ delta (Node node) =
     Node
         { node
@@ -280,7 +351,7 @@ moveZ delta (Node node) =
         }
 
 
-rotateX : Float -> Node model msg -> Node model msg
+rotateX : Float -> Node msg -> Node msg
 rotateX delta (Node node) =
     Node
         { node
@@ -291,7 +362,7 @@ rotateX delta (Node node) =
         }
 
 
-rotateY : Float -> Node model msg -> Node model msg
+rotateY : Float -> Node msg -> Node msg
 rotateY delta (Node node) =
     Node
         { node
@@ -302,7 +373,7 @@ rotateY delta (Node node) =
         }
 
 
-rotateZ : Float -> Node model msg -> Node model msg
+rotateZ : Float -> Node msg -> Node msg
 rotateZ delta (Node node) =
     Node
         { node
@@ -317,16 +388,16 @@ rotateZ delta (Node node) =
 -- ON TICK & USER INPUT
 
 
-type alias Context model =
-    Elm3d.Context.Context model
+type alias Context =
+    Elm3d.Context.Context
 
 
-withOnUpdate : (Context model -> Node model msg -> ( Node model msg, Cmd msg )) -> Node model msg -> Node model msg
+withOnUpdate : (Context -> Node msg -> msg) -> Node msg -> Node msg
 withOnUpdate props (Node node) =
     Node { node | onUpdate = Just props }
 
 
-withOnInput : (Elm3d.Input.Event.Event -> Node model msg -> ( Node model msg, Cmd msg )) -> Node model msg -> Node model msg
+withOnInput : (Elm3d.Input.Event.Event -> Node msg -> msg) -> Node msg -> Node msg
 withOnInput props (Node node) =
     Node { node | onInput = Just props }
 
@@ -335,7 +406,7 @@ withOnInput props (Node node) =
 -- READING
 
 
-isDirectionalLight : Node model msg -> Bool
+isDirectionalLight : Node msg -> Bool
 isDirectionalLight (Node node) =
     case node.kind of
         DirectionalLight ->
@@ -345,34 +416,64 @@ isDirectionalLight (Node node) =
             False
 
 
-toPosition : Node model msg -> Vector3
+toPosition : Node msg -> Vector3
 toPosition (Node node) =
     Elm3d.Transform3d.toPosition node.transform
 
 
-toRotation : Node model msg -> Vector3
+toPositionX : Node msg -> Float
+toPositionX (Node node) =
+    Elm3d.Transform3d.toPositionX node.transform
+
+
+toPositionY : Node msg -> Float
+toPositionY (Node node) =
+    Elm3d.Transform3d.toPositionY node.transform
+
+
+toPositionZ : Node msg -> Float
+toPositionZ (Node node) =
+    Elm3d.Transform3d.toPositionZ node.transform
+
+
+toRotation : Node msg -> Vector3
 toRotation (Node node) =
     Elm3d.Transform3d.toRotation node.transform
 
 
-toScale : Node model msg -> Vector3
-toScale (Node node) =
-    Elm3d.Transform3d.toScale node.transform
-
-
-toRotationX : Node model msg -> Float
+toRotationX : Node msg -> Float
 toRotationX (Node node) =
     Elm3d.Transform3d.toRotationX node.transform
 
 
-toRotationY : Node model msg -> Float
+toRotationY : Node msg -> Float
 toRotationY (Node node) =
     Elm3d.Transform3d.toRotationY node.transform
 
 
-toRotationZ : Node model msg -> Float
+toRotationZ : Node msg -> Float
 toRotationZ (Node node) =
     Elm3d.Transform3d.toRotationZ node.transform
+
+
+toScale : Node msg -> Vector3
+toScale (Node node) =
+    Elm3d.Transform3d.toScale node.transform
+
+
+toScaleX : Node msg -> Float
+toScaleX (Node node) =
+    Elm3d.Transform3d.toScaleX node.transform
+
+
+toScaleY : Node msg -> Float
+toScaleY (Node node) =
+    Elm3d.Transform3d.toScaleY node.transform
+
+
+toScaleZ : Node msg -> Float
+toScaleZ (Node node) =
+    Elm3d.Transform3d.toScaleZ node.transform
 
 
 toEntity :
@@ -382,7 +483,7 @@ toEntity :
         , light : Maybe Vector3
         , assets : Elm3d.Asset.Model
         }
-    -> Node model msg
+    -> Node msg
     -> List WebGL.Entity
 toEntity groupMatrix props ((Node { transform, kind }) as node) =
     case kind of
@@ -458,7 +559,7 @@ toEntity groupMatrix props ((Node { transform, kind }) as node) =
                     ]
 
 
-toObjFileUrls : Node model msg -> List String
+toObjFileUrls : Node msg -> List String
 toObjFileUrls (Node node) =
     case node.kind of
         Group children ->
@@ -471,50 +572,36 @@ toObjFileUrls (Node node) =
             []
 
 
-onInput : Elm3d.Input.Event.Event -> Node model msg -> ( Node model msg, Cmd msg )
+onInput : Elm3d.Input.Event.Event -> Node msg -> List msg
 onInput event (Node node) =
     case node.kind of
         Group children ->
             let
-                nodeCmdTuples : List ( Node model msg, Cmd msg )
-                nodeCmdTuples =
-                    List.map (onInput event) children
+                childMsgs : List msg
+                childMsgs =
+                    List.concatMap (onInput event) children
 
-                newChildren : List (Node model msg)
-                newChildren =
-                    List.map Tuple.first nodeCmdTuples
-
-                nestedCmds : Cmd msg
-                nestedCmds =
-                    List.map Tuple.second nodeCmdTuples
-                        |> Cmd.batch
-
-                updatedGroupNode : Node model msg
+                updatedGroupNode : Node msg
                 updatedGroupNode =
                     Node { node | kind = Group children }
-
-                groupAndCmd : ( Node model msg, Cmd msg )
-                groupAndCmd =
-                    case node.onInput of
-                        Just fn ->
-                            fn event updatedGroupNode
-
-                        Nothing ->
-                            ( updatedGroupNode, Cmd.none )
             in
-            groupAndCmd
-                |> Tuple.mapSecond (\cmd -> Cmd.batch [ cmd, nestedCmds ])
+            case node.onInput of
+                Just fn ->
+                    fn event updatedGroupNode :: childMsgs
+
+                Nothing ->
+                    childMsgs
 
         _ ->
             case node.onInput of
                 Just fn ->
-                    fn event (Node node)
+                    [ fn event (Node node) ]
 
                 Nothing ->
-                    ( Node node, Cmd.none )
+                    []
 
 
-hasUpdateFunction : Node model msg -> Bool
+hasUpdateFunction : Node msg -> Bool
 hasUpdateFunction (Node node) =
     case node.kind of
         Group children ->
@@ -524,50 +611,35 @@ hasUpdateFunction (Node node) =
             thisNodeHasUpdate (Node node)
 
 
-thisNodeHasUpdate : Node model msg -> Bool
+thisNodeHasUpdate : Node msg -> Bool
 thisNodeHasUpdate (Node node) =
     node.onUpdate /= Nothing
 
 
-update : Context model -> Node model msg -> ( Node model msg, Cmd msg )
+update : Context -> Node msg -> List msg
 update ctx (Node node) =
     case node.kind of
         Group children ->
             let
-                nodeCmdTuples : List ( Node model msg, Cmd msg )
-                nodeCmdTuples =
-                    List.map (update ctx) children
+                childMsgs : List msg
+                childMsgs =
+                    List.concatMap (update ctx) children
 
-                newChildren : List (Node model msg)
-                newChildren =
-                    List.map Tuple.first nodeCmdTuples
-
-                nestedCmds : Cmd msg
-                nestedCmds =
-                    List.map Tuple.second nodeCmdTuples
-                        |> Cmd.batch
-
-                updatedGroupNode : Node model msg
+                updatedGroupNode : Node msg
                 updatedGroupNode =
                     Node { node | kind = Group children }
-
-                groupAndCmd : ( Node model msg, Cmd msg )
-                groupAndCmd =
-                    (case node.onUpdate of
-                        Just fn ->
-                            fn ctx updatedGroupNode
-
-                        Nothing ->
-                            ( updatedGroupNode, Cmd.none )
-                    )
-                        |> Tuple.mapSecond (\cmd -> Cmd.batch [ cmd, nestedCmds ])
             in
-            groupAndCmd
+            case node.onUpdate of
+                Just fn ->
+                    fn ctx updatedGroupNode :: childMsgs
+
+                Nothing ->
+                    childMsgs
 
         _ ->
             case node.onUpdate of
                 Just onUpdate ->
-                    onUpdate ctx (Node node)
+                    [ onUpdate ctx (Node node) ]
 
                 Nothing ->
-                    ( Node node, Cmd.none )
+                    []
