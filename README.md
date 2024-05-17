@@ -18,56 +18,94 @@ elm install ryan-haskell/elm-3d
 module Main exposing (main)
 
 import Elm3d.Camera exposing (Camera)
+import Elm3d.Context exposing (Context)
 import Elm3d.Node exposing (Node)
-import Elm3d.Program exposing (Program)
-import Elm3d.Vector3
+import Elm3d.Program exposing (Program, View)
 import Elm3d.Viewport
 
 
-main : Program
+main : Program () Model Msg
 main =
-    Elm3d.Program.new
-        { window = Elm3d.Viewport.fullscreenAspect (16 / 9)
-        , camera =
-            Elm3d.Camera.perspective
-                { fov = 60
-                , near = 0.01
-                , far = 1000
-                }
-                |> Elm3d.Camera.withPosition (Elm3d.Vector3.new 0 0 4)
-        , nodes = [ buildings ]
+    Elm3d.Program.sandbox
+        { init = init
+        , update = update
+        , view = view
         }
 
 
-buildings : Node
-buildings =
+
+-- MODEL
+
+
+type alias Model =
+    { angle : Float
+    }
+
+
+init : Model
+init =
+    { angle = 0
+    }
+
+
+
+-- UPDATE
+
+
+type Msg
+    = Spin Context Node
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        Spin ctx node ->
+            { model | angle = model.angle + ctx.dt }
+
+
+
+-- VIEW
+
+
+view : Model -> View Msg
+view model =
+    { viewport = Elm3d.Viewport.fullscreen
+    , background = Elm3d.Color.white
+    , camera =
+        Elm3d.Camera.perspective
+            { fov = 60
+            , near = 1
+            , far = 100
+            }
+            |> Elm3d.Camera.withPositionZ 5
+    , nodes =
+        [ buildings model
+        ]
+    }
+
+
+buildings : Model -> Node Msg
+buildings model =
     Elm3d.Node.group
         [ tavern
         , church
         ]
-        |> Elm3d.Node.withPositionY -0.5
-        |> Elm3d.Node.withOnUpdate rotateEveryFrame
+        |> Elm3d.Node.withOnUpdate Spin
+        |> Elm3d.Node.withRotationY model.angle
 
 
-tavern : Node
+tavern : Node Msg
 tavern =
     Elm3d.Node.obj
-        { url = "http://localhost:3000/medieval_hexagon/building_tavern_blue.obj"
+        { url = "/assets/buildings/tavern.obj"
         }
-        |> Elm3d.Node.withPositionX 0.75
+        |> Elm3d.Node.withPositionX 1
 
 
-church : Node
+church : Node Msg
 church =
     Elm3d.Node.obj
-        { url = "http://localhost:3000/medieval_hexagon/building_church_blue.obj"
+        { url = "/assets/buildings/church.obj"
         }
-        |> Elm3d.Node.withPositionX -0.75
-
-
-rotateEveryFrame : Elm3d.Node.Context -> Node -> Node
-rotateEveryFrame { dt } node =
-    node
-        |> Elm3d.Node.rotateY (dt * 0.5)
-
+        |> Elm3d.Node.withPositionX -1
 ```
