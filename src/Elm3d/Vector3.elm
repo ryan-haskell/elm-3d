@@ -4,6 +4,7 @@ module Elm3d.Vector3 exposing
     , one, zero
     , positiveX, positiveY, positiveZ
     , x, y, z
+    , add
     )
 
 {-|
@@ -102,3 +103,7 @@ y vec3 =
 z : Vector3 -> Float
 z vec3 =
     Math.Vector3.getZ vec3
+
+
+add =
+    Math.Vector3.add

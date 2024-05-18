@@ -3,6 +3,7 @@ module Elm3d.Context exposing
     , isKeyPressed
     , isLeftClickPressed
     , toInputAxis
+    , toInputVector
     )
 
 import Elm3d.Input
@@ -29,34 +30,14 @@ isLeftClickPressed ctx =
 
 {-| Commonly used when working with directional user input
 -}
-toInputAxis : Context -> { x : ( Key, Key ), y : ( Key, Key ) } -> Vector2
-toInputAxis ctx keys =
+toInputVector : Context -> { x : ( Key, Key ), y : ( Key, Key ) } -> Vector2
+toInputVector ctx keys =
     let
-        ( keyLeft, keyRight ) =
-            keys.x
-
-        ( keyDown, keyUp ) =
-            keys.y
-
         x =
-            if isKeyPressed keyRight ctx then
-                1
-
-            else if isKeyPressed keyLeft ctx then
-                -1
-
-            else
-                0
+            toInputAxis ctx keys.x
 
         y =
-            if isKeyPressed keyUp ctx then
-                1
-
-            else if isKeyPressed keyDown ctx then
-                -1
-
-            else
-                0
+            toInputAxis ctx keys.y
     in
     if x == 0 && y == 0 then
         Elm3d.Vector2.zero
@@ -64,3 +45,21 @@ toInputAxis ctx keys =
     else
         Elm3d.Vector2.new x y
             |> Elm3d.Vector2.normalize
+
+
+{-| Commonly used when working with directional user input
+-}
+toInputAxis : Context -> ( Key, Key ) -> Float
+toInputAxis ctx ( left, right ) =
+    if isKeyPressed right ctx then
+        if isKeyPressed left ctx then
+            0
+
+        else
+            1
+
+    else if isKeyPressed left ctx then
+        -1
+
+    else
+        0

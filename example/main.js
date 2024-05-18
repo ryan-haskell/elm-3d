@@ -1,5 +1,5 @@
-import Main from './src/Main.elm'
+import Elm from './src/Embedded.elm'
 
-Main.init({
+Elm.init({
   node: document.getElementById('app')
 })

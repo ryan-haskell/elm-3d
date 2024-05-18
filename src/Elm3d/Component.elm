@@ -277,41 +277,45 @@ view ({ size, toMsg } as props) (Model model) =
                     , Html.Attributes.height height
                     , Html.Attributes.style "background-color" (Elm3d.Color.toHtmlColor props.background)
                     , Html.Attributes.style "transform-origin" "top left"
+                    , preventRightClickMenu
                     ]
 
-        viewFps : Html msg
-        viewFps =
-            Html.div
-                [ Html.Attributes.style "position" "fixed"
-                , Html.Attributes.style "top" "1rem"
-                , Html.Attributes.style "right" "1rem"
-                , Html.Attributes.style "font-family" "sans-serif"
-                , Html.Attributes.style "color" "white"
-                , Html.Attributes.style "text-shadow" "0 -1px 1px black, 0 1px 1px black, -1px 0 1px black, 1px 0 1px black"
-                ]
-                [ case FixedSet.toAverage model.fps of
-                    Just spf ->
-                        Html.text
-                            ((1 / spf)
-                                |> Basics.round
-                                |> String.fromInt
-                                |> (\s -> s ++ " fps")
-                            )
-
-                    Nothing ->
-                        Html.text ""
-                ]
+        preventRightClickMenu =
+            Html.Events.custom "contextmenu"
+                (Json.Decode.succeed
+                    { message = ContextMenu
+                    , stopPropagation = True
+                    , preventDefault = True
+                    }
+                )
+                |> Html.Attributes.map toMsg
     in
+    viewCanvas
+
+
+
+-- DEBUGGING
+
+
+viewFps : Model -> Html msg
+viewFps (Model model) =
     Html.div
-        [ Html.Events.custom "contextmenu"
-            (Json.Decode.succeed
-                { message = ContextMenu
-                , stopPropagation = True
-                , preventDefault = True
-                }
-            )
-            |> Html.Attributes.map toMsg
+        [ Html.Attributes.style "position" "fixed"
+        , Html.Attributes.style "top" "1rem"
+        , Html.Attributes.style "right" "1rem"
+        , Html.Attributes.style "font-family" "sans-serif"
+        , Html.Attributes.style "color" "white"
+        , Html.Attributes.style "text-shadow" "0 -1px 1px black, 0 1px 1px black, -1px 0 1px black, 1px 0 1px black"
         ]
-        [ viewCanvas
-        , viewFps
+        [ case FixedSet.toAverage model.fps of
+            Just spf ->
+                Html.text
+                    ((1 / spf)
+                        |> Basics.round
+                        |> String.fromInt
+                        |> (\s -> s ++ " fps")
+                    )
+
+            Nothing ->
+                Html.text ""
         ]

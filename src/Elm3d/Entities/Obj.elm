@@ -22,6 +22,7 @@ import Elm3d.Vector3 exposing (Vector3)
 import List.Extra
 import Math.Vector2
 import WebGL
+import WebGL.Settings
 import WebGL.Settings.DepthTest
 import WebGL.Texture exposing (Texture)
 
@@ -128,14 +129,14 @@ fragmentShaderT0 =
             }
 
             gl_FragColor = vec4(v_kd, 1.0);
-            gl_FragColor.rgb *= clamp(light, 0.75, 1.0);
+            gl_FragColor.rgb *= clamp(light, 0.0, 1.0);
         }
     |]
 
 
 toEntityT0 : WebGL.Mesh Attributes -> UniformsT0 -> WebGL.Entity
 toEntityT0 mesh uniforms =
-    WebGL.entityWith [ WebGL.Settings.DepthTest.default ]
+    WebGL.entityWith settings
         vertexShaderT0
         fragmentShaderT0
         mesh
@@ -200,15 +201,22 @@ fragmentShaderT1 =
             }
 
             gl_FragColor = texture2D(texture, v_uv);
-            gl_FragColor.rgb *= clamp(light, 0.75, 1.0);
+            gl_FragColor.rgb *= clamp(light, 0.0, 1.0);
         }
     |]
 
 
 toEntityT1 : WebGL.Mesh Attributes -> UniformsT1 -> WebGL.Entity
 toEntityT1 mesh uniforms =
-    WebGL.entityWith [ WebGL.Settings.DepthTest.default ]
+    WebGL.entityWith settings
         vertexShaderT1
         fragmentShaderT1
         mesh
         uniforms
+
+
+settings : List WebGL.Settings.Setting
+settings =
+    [ WebGL.Settings.DepthTest.default
+    , WebGL.Settings.cullFace WebGL.Settings.back
+    ]

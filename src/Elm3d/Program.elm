@@ -1,4 +1,14 @@
-module Elm3d.Program exposing (Program, View, new)
+module Elm3d.Program exposing
+    ( Program, View
+    , static, sandbox, element
+    )
+
+{-|
+
+@docs Program, View
+@docs static, sandbox, element
+
+-}
 
 import Browser
 import Elm3d.Camera exposing (Camera)
@@ -43,7 +53,34 @@ type alias Props flags model msg =
     }
 
 
-new :
+static : View () -> Program () () ()
+static props =
+    sandbox
+        { onAssetsLoaded = ()
+        , init = \_ -> ()
+        , update = \_ m -> m
+        , view = \_ -> props
+        }
+
+
+sandbox :
+    { onAssetsLoaded : msg
+    , init : flags -> model
+    , update : msg -> model -> model
+    , view : model -> View msg
+    }
+    -> Program flags model msg
+sandbox props =
+    element
+        { onAssetsLoaded = props.onAssetsLoaded
+        , init = \flags -> ( props.init flags, Cmd.none )
+        , update = \msg model -> ( props.update msg model, Cmd.none )
+        , subscriptions = \_ -> Sub.none
+        , view = props.view
+        }
+
+
+element :
     { onAssetsLoaded : msg
     , init : flags -> ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
@@ -51,7 +88,7 @@ new :
     , view : model -> View msg
     }
     -> Program flags model msg
-new props =
+element props =
     Browser.element
         { init = init props
         , update = update props

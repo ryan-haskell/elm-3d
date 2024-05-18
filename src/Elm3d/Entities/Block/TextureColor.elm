@@ -30,7 +30,7 @@ vertexShader =
 fragmentShader : WebGL.Shader {} Uniforms Varyings
 fragmentShader =
     [glsl|
-        precision mediump float;
+        precision highp float;
         uniform vec4 color;
         uniform vec3 lightDirection;
         varying vec3 v_position;
@@ -50,7 +50,7 @@ fragmentShader =
             }
 
             gl_FragColor = color;
-            gl_FragColor.rgb *= clamp(light, 0.75, 1.0);
+            gl_FragColor.rgb *= clamp(light, 0.0, 1.0);
         }
     |]
 

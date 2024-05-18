@@ -7,6 +7,7 @@ module Elm3d.Vector2 exposing
     , add, clamp
     , length
     , x, y, toRecord
+    , rotate
     )
 
 {-|
@@ -128,6 +129,27 @@ clamp minV maxV valueV =
 scale : Float -> Vector2 -> Vector2
 scale constant vec2 =
     Math.Vector2.scale constant vec2
+
+
+rotate : Float -> Vector2 -> Vector2
+rotate angle vec2 =
+    let
+        vector =
+            toRecord vec2
+
+        cosAngle =
+            cos angle
+
+        sinAngle =
+            sin angle
+
+        x2 =
+            vector.x * cosAngle - vector.y * sinAngle
+
+        y2 =
+            vector.x * sinAngle + vector.y * cosAngle
+    in
+    fromRecord { x = x2, y = y2 }
 
 
 add : Vector2 -> Vector2 -> Vector2

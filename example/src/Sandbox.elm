@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Sandbox exposing (main)
 
 import Elm3d.Camera
 import Elm3d.Camera.Isometric
@@ -32,11 +32,10 @@ type alias Camera =
 
 main : Program Flags Model Msg
 main =
-    Elm3d.Program.new
+    Elm3d.Program.sandbox
         { onAssetsLoaded = AssetsLoaded
         , init = init
         , update = update
-        , subscriptions = subscriptions
         , view = view
         }
 
@@ -46,8 +45,10 @@ main =
 
 
 type alias Model =
-    { cameraZoom : Float
+    { isIsometricCamera : Bool
+    , cameraZoom : Float
     , cameraOffset : Vector2
+    , cameraAngle : Float
     , playerPosition : Vector3
     , playerRotation : Float
     , npcPosition : Vector3
@@ -56,18 +57,18 @@ type alias Model =
     }
 
 
-init : Flags -> ( Model, Cmd Msg )
+init : Flags -> Model
 init flags =
-    ( { cameraZoom = 8
-      , cameraOffset = Elm3d.Vector2.new -3 5
-      , playerPosition = Elm3d.Vector3.new -6 0 -1
-      , playerRotation = pi / 2
-      , npcPosition = Elm3d.Vector3.zero
-      , npcRotation = 0
-      , npcSwayAmount = 0
-      }
-    , Cmd.none
-    )
+    { isIsometricCamera = False
+    , cameraZoom = 8
+    , cameraOffset = Elm3d.Vector2.new -3 5
+    , cameraAngle = 0
+    , playerPosition = Elm3d.Vector3.new -6 0 -1
+    , playerRotation = pi / 2
+    , npcPosition = Elm3d.Vector3.zero
+    , npcRotation = 0
+    , npcSwayAmount = 0
+    }
 
 
 
@@ -82,36 +83,39 @@ type Msg
     | SwayBackAndForth Context Node
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> Model
 update msg model =
     case msg of
         AssetsLoaded ->
-            ( model
-            , Cmd.none
-            )
+            model
 
         CameraUpdate ctx camera ->
             let
                 cameraPanRate =
                     1.5
 
+                cameraZoomRate =
+                    15.0
+
                 cameraOffset : Vector2
                 cameraOffset =
-                    Elm3d.Context.toInputAxis ctx
-                        { x = ( Key.KEY_A, Key.KEY_D )
-                        , y = ( Key.KEY_S, Key.KEY_W )
+                    Elm3d.Context.toInputVector ctx
+                        { x = ( KEY_A, KEY_D )
+                        , y = ( KEY_S, KEY_W )
                         }
                         |> Elm3d.Vector2.scale (ctx.dt * cameraPanRate)
-                        |> Elm3d.Vector2.add (Elm3d.Camera.toOffset camera)
+                        |> Elm3d.Vector2.add model.cameraOffset
 
+                -- |> Elm3d.Vector2.add (Elm3d.Camera.toOffset camera)
                 isMousePressed : Bool
                 isMousePressed =
                     Elm3d.Context.isLeftClickPressed ctx
+                        |> Debug.log "isMousePressed"
 
                 targetSize : Float
                 targetSize =
                     if isMousePressed then
-                        4
+                        5
 
                     else
                         8
@@ -121,15 +125,21 @@ update msg model =
                     Elm3d.Float.lerp
                         { from = Elm3d.Camera.Isometric.size camera
                         , to = targetSize
-                        , step = ctx.dt * 10
+                        , step = ctx.dt * cameraZoomRate
                         }
+
+                cameraAngleInput =
+                    Elm3d.Context.toInputAxis ctx
+                        ( KEY_ARROW_LEFT, KEY_ARROW_RIGHT )
+
+                cameraAngle =
+                    model.cameraAngle + (ctx.dt * cameraAngleInput)
             in
-            ( { model
+            { model
                 | cameraOffset = cameraOffset
                 , cameraZoom = cameraZoom
-              }
-            , Cmd.none
-            )
+                , cameraAngle = cameraAngle
+            }
 
         RunningNpcUpdate ctx node ->
             let
@@ -143,12 +153,10 @@ update msg model =
                         (abs (bounceHeight * cos (12 * ctx.time)))
                         (radius * cos ctx.time)
             in
-            ( { model
+            { model
                 | npcPosition = newPosition
                 , npcRotation = ctx.time + pi / 2
-              }
-            , Cmd.none
-            )
+            }
 
         PlayerUpdate ctx node ->
             let
@@ -158,11 +166,22 @@ update msg model =
 
                 input : Elm3d.Vector2.Vector2
                 input =
-                    Elm3d.Context.toInputAxis ctx
+                    Elm3d.Context.toInputVector ctx
                         { x = ( KEY_A, KEY_D )
-                        , y = ( KEY_S, KEY_W )
+                        , y =
+                            if model.isIsometricCamera then
+                                ( KEY_S, KEY_W )
+
+                            else
+                                ( KEY_W, KEY_S )
                         }
                         |> Elm3d.Vector2.scale (ctx.dt * playerMoveSpeed)
+                        |> (if model.isIsometricCamera then
+                                identity
+
+                            else
+                                Elm3d.Vector2.rotate model.cameraAngle
+                           )
 
                 isNotMoving : Bool
                 isNotMoving =
@@ -179,11 +198,14 @@ update msg model =
                     if isNotMoving then
                         Elm3d.Vector2.zero
 
-                    else
+                    else if model.isIsometricCamera then
                         Elm3d.Isometric.toOffsetVector
                             { angle = cameraRotation
                             , input = input
                             }
+
+                    else
+                        input
 
                 playerRotation : Float
                 playerRotation =
@@ -204,28 +226,17 @@ update msg model =
                     else
                         abs (bounceHeight * cos (12 * ctx.time))
             in
-            ( { model
+            { model
                 | playerPosition =
                     Elm3d.Vector3.new
                         (Elm3d.Vector2.x position + Elm3d.Vector2.x delta)
                         playerHeight
                         (Elm3d.Vector2.y position + Elm3d.Vector2.y delta)
                 , playerRotation = playerRotation
-              }
-            , Cmd.none
-            )
+            }
 
         SwayBackAndForth ctx node ->
-            ( { model | npcSwayAmount = 0.05 * cos (12 * ctx.time) }, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+            { model | npcSwayAmount = 0.05 * cos (12 * ctx.time) }
 
 
 
@@ -243,8 +254,33 @@ view model =
         , npcRunningAroundTavern model
         , church
         , beardedGuy model
+        , marketArea model
         ]
     }
+
+
+market : Node
+market =
+    Elm3d.Node.obj
+        { url = "/assets/medieval_hexagon/building_market_blue.obj"
+        }
+        |> Elm3d.Node.withRotationY (pi / 4)
+
+
+marketArea model =
+    Elm3d.Node.group
+        [ market
+        , vendor model
+        ]
+        |> Elm3d.Node.withPosition (Elm3d.Vector3.new -5.5 0 -5.5)
+
+
+vendor model =
+    Elm3d.Node.group
+        [ toVillager model { name = "male1" }
+        ]
+        |> Elm3d.Node.withRotationY (pi / 3)
+        |> Elm3d.Node.withPosition (Elm3d.Vector3.new 0 0 1)
 
 
 skyBlue : Color
@@ -272,7 +308,7 @@ npcRunningAroundTavern model =
         , runningNpc model
         ]
         |> Elm3d.Node.withPositionX -3
-        |> Elm3d.Node.withPositionZ -8
+        |> Elm3d.Node.withPositionZ -6
 
 
 tavern : Node
@@ -344,6 +380,44 @@ toTreeNode offset =
 
 toCamera : Model -> Camera
 toCamera model =
+    if model.isIsometricCamera then
+        isometricCamera model
+            |> Elm3d.Camera.withOnUpdate CameraUpdate
+
+    else
+        perspectiveCamera model
+            |> Elm3d.Camera.withOnUpdate CameraUpdate
+
+
+perspectiveCamera : Model -> Camera
+perspectiveCamera model =
+    let
+        cameraZoom =
+            2
+
+        offset =
+            cameraZoom / 1.5
+    in
+    Elm3d.Camera.perspective
+        { fov = 60
+        , near = 0.01
+        , far = 1000
+        }
+        |> Elm3d.Camera.withPosition
+            (Elm3d.Vector3.add model.playerPosition
+                (Elm3d.Vector3.new
+                    (offset * sin -model.cameraAngle)
+                    0
+                    (offset * cos -model.cameraAngle)
+                )
+            )
+        |> Elm3d.Camera.withPositionY (cameraZoom / 2)
+        |> Elm3d.Camera.withRotationX (-pi / 8)
+        |> Elm3d.Camera.withRotationY -model.cameraAngle
+
+
+isometricCamera : Model -> Camera
+isometricCamera model =
     Elm3d.Camera.Isometric.new
         { size = model.cameraZoom
         , near = 0.01
@@ -353,7 +427,6 @@ toCamera model =
         , distance = 100
         , offset = model.cameraOffset
         }
-        |> Elm3d.Camera.withOnUpdate CameraUpdate
 
 
 cameraRotation : Float
