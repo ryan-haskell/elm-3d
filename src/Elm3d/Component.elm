@@ -31,6 +31,7 @@ import Html.Events
 import Json.Decode
 import List.Extra
 import Task
+import Time
 import WebGL
 
 
@@ -219,11 +220,26 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
                     )
 
 
-subscriptions : { nodes : List (Node msg), camera : Camera msg } -> Model -> Sub Msg
+subscriptions :
+    { fpsLimit : Maybe Float
+    , nodes : List (Node msg)
+    , camera : Camera msg
+    }
+    -> Model
+    -> Sub Msg
 subscriptions props model =
     Sub.batch
         [ if hasAnyUpdateNodes props model then
-            Browser.Events.onAnimationFrameDelta Frame
+            case props.fpsLimit of
+                Just fps ->
+                    if fps < 60 then
+                        Time.every (1000 / fps) (\_ -> Frame (1000 / fps))
+
+                    else
+                        Browser.Events.onAnimationFrameDelta Frame
+
+                Nothing ->
+                    Browser.Events.onAnimationFrameDelta Frame
 
           else
             Sub.none
@@ -233,14 +249,15 @@ subscriptions props model =
         ]
 
 
-hasAnyUpdateNodes : { nodes : List (Node msg), camera : Camera msg } -> Model -> Bool
+hasAnyUpdateNodes : { props | nodes : List (Node msg), camera : Camera msg } -> Model -> Bool
 hasAnyUpdateNodes { nodes, camera } (Model model) =
     Elm3d.Camera.hasUpdateFunction camera
         || List.any Elm3d.Node.hasUpdateFunction nodes
 
 
 view :
-    { size : ( Int, Int )
+    { showFps : Bool
+    , size : ( Int, Int )
     , toMsg : Msg -> msg
     , background : Color
     , nodes : List (Node msg)
@@ -290,7 +307,14 @@ view ({ size, toMsg } as props) (Model model) =
                 )
                 |> Html.Attributes.map toMsg
     in
-    viewCanvas
+    if props.showFps then
+        Html.div []
+            [ viewCanvas
+            , viewFps (Model model)
+            ]
+
+    else
+        viewCanvas
 
 
 

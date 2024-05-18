@@ -188,7 +188,12 @@ subscriptions props (Model { user, elm3d }) =
     Sub.batch
         [ props.subscriptions user
             |> Sub.map User
-        , Elm3d.Component.subscriptions { nodes = nodes, camera = camera } elm3d
+        , Elm3d.Component.subscriptions
+            { fpsLimit = Nothing
+            , nodes = nodes
+            , camera = camera
+            }
+            elm3d
             |> Sub.map Elm3d
         ]
 
@@ -209,7 +214,8 @@ view props (Model { user, elm3d }) =
         viewElm3dCanvas : Html (Msg msg)
         viewElm3dCanvas =
             Elm3d.Component.view
-                { size = size
+                { showFps = False
+                , size = size
                 , background = background
                 , toMsg = Elm3d
                 , nodes = nodes

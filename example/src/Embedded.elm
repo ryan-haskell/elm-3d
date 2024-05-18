@@ -86,7 +86,8 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     model.elm3d
         |> Elm3d.Component.subscriptions
-            { nodes = nodes model
+            { fpsLimit = Just 30
+            , nodes = nodes model
             , camera = camera
             }
         |> Sub.map Elm3d
@@ -132,7 +133,8 @@ html, body { height: 100%; margin: 0; }
 body { display: flex; align-items: center; justify-content: center; background: #121212; color: white; }
         """ ]
         , Elm3d.Component.view
-            { size = ( 64, 64 )
+            { showFps = False
+            , size = ( 64, 64 )
             , toMsg = Elm3d
             , background = Elm3d.Color.transparent
             , nodes = nodes model
