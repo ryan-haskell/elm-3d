@@ -30,6 +30,7 @@ main =
         { init = init
         , update = update
         , view = view
+        , onAssetsLoaded = AssetsLoaded
         }
 
 
@@ -53,12 +54,16 @@ init =
 
 
 type Msg
-    = Spin Context Node
+    = AssetsLoaded
+    | Spin Context Node
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
+        AssetsLoaded ->
+            model
+
         Spin ctx node ->
             { model | angle = model.angle + ctx.dt }
 
