@@ -12,7 +12,7 @@
         "Elm3d.Vector2",
         "Elm3d.Vector3",
         "Elm3d.Vector4",
-        "Elm3d.Node.Public",
+        "Elm3d.Node",
         "Elm3d.Input.Event",
         "Elm3d.Input.Key",
         "Elm3d.Input.Mouse"

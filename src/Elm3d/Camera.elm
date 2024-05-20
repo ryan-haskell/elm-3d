@@ -48,9 +48,9 @@ docs withFov, withSize, withNear, withFar, withAngle, withRotation, withDistance
 
 import Elm3d.Camera.Projection exposing (Projection(..))
 import Elm3d.Input.Event
+import Elm3d.Internals.Node as Node exposing (Node)
 import Elm3d.Isometric
 import Elm3d.Matrix4 exposing (Matrix4)
-import Elm3d.Node exposing (Node)
 import Elm3d.Transform3d exposing (Transform3d)
 import Elm3d.Vector2 exposing (Vector2)
 import Elm3d.Vector3 exposing (Vector3)
@@ -68,7 +68,7 @@ type Camera msg
 
 map : (a -> b) -> Camera a -> Camera b
 map fn (Camera node) =
-    Camera (Elm3d.Node.map fn node)
+    Camera (Node.map fn node)
 
 
 
@@ -81,7 +81,7 @@ orthographic :
     }
     -> Camera msg
 orthographic props =
-    Camera (Elm3d.Node.camera { projection = Orthographic props })
+    Camera (Node.camera { projection = Orthographic props })
 
 
 perspective :
@@ -90,7 +90,7 @@ perspective :
     }
     -> Camera msg
 perspective props =
-    Camera (Elm3d.Node.camera { projection = Perspective props })
+    Camera (Node.camera { projection = Perspective props })
 
 
 isometric :
@@ -103,12 +103,12 @@ isometric :
     }
     -> Camera msg
 isometric props =
-    Camera (Elm3d.Node.camera { projection = Isometric props })
+    Camera (Node.camera { projection = Isometric props })
 
 
 toIsometricProps : Camera msg -> Maybe Elm3d.Camera.Projection.IsometricProps
 toIsometricProps (Camera node) =
-    case Elm3d.Node.toCameraProjection node of
+    case Node.toCameraProjection node of
         Nothing ->
             Nothing
 
@@ -128,97 +128,97 @@ toIsometricProps (Camera node) =
 
 withPosition : Vector3 -> Camera msg -> Camera msg
 withPosition props (Camera node) =
-    Camera (Elm3d.Node.withPosition props node)
+    Camera (Node.withPosition props node)
 
 
 withRotation : Vector3 -> Camera msg -> Camera msg
 withRotation props (Camera node) =
-    Camera (Elm3d.Node.withRotation props node)
+    Camera (Node.withRotation props node)
 
 
 withPositionX : Float -> Camera msg -> Camera msg
 withPositionX props (Camera node) =
-    Camera (Elm3d.Node.withPositionX props node)
+    Camera (Node.withPositionX props node)
 
 
 withPositionY : Float -> Camera msg -> Camera msg
 withPositionY props (Camera node) =
-    Camera (Elm3d.Node.withPositionY props node)
+    Camera (Node.withPositionY props node)
 
 
 withPositionZ : Float -> Camera msg -> Camera msg
 withPositionZ props (Camera node) =
-    Camera (Elm3d.Node.withPositionZ props node)
+    Camera (Node.withPositionZ props node)
 
 
 withRotationX : Float -> Camera msg -> Camera msg
 withRotationX props (Camera node) =
-    Camera (Elm3d.Node.withRotationX props node)
+    Camera (Node.withRotationX props node)
 
 
 withRotationY : Float -> Camera msg -> Camera msg
 withRotationY props (Camera node) =
-    Camera (Elm3d.Node.withRotationY props node)
+    Camera (Node.withRotationY props node)
 
 
 withRotationZ : Float -> Camera msg -> Camera msg
 withRotationZ props (Camera node) =
-    Camera (Elm3d.Node.withRotationZ props node)
+    Camera (Node.withRotationZ props node)
 
 
 moveX : Float -> Camera msg -> Camera msg
 moveX props (Camera node) =
-    Camera (Elm3d.Node.moveX props node)
+    Camera (Node.moveX props node)
 
 
 moveY : Float -> Camera msg -> Camera msg
 moveY props (Camera node) =
-    Camera (Elm3d.Node.moveY props node)
+    Camera (Node.moveY props node)
 
 
 moveZ : Float -> Camera msg -> Camera msg
 moveZ props (Camera node) =
-    Camera (Elm3d.Node.moveZ props node)
+    Camera (Node.moveZ props node)
 
 
 rotateX : Float -> Camera msg -> Camera msg
 rotateX props (Camera node) =
-    Camera (Elm3d.Node.rotateX props node)
+    Camera (Node.rotateX props node)
 
 
 rotateY : Float -> Camera msg -> Camera msg
 rotateY props (Camera node) =
-    Camera (Elm3d.Node.rotateY props node)
+    Camera (Node.rotateY props node)
 
 
 rotateZ : Float -> Camera msg -> Camera msg
 rotateZ props (Camera node) =
-    Camera (Elm3d.Node.rotateZ props node)
+    Camera (Node.rotateZ props node)
 
 
 hasUpdateFunction : Camera msg -> Bool
 hasUpdateFunction (Camera node) =
-    Elm3d.Node.hasUpdateFunction node
+    Node.hasUpdateFunction node
 
 
-update : Elm3d.Node.Context -> Camera msg -> List msg
+update : Node.Context -> Camera msg -> List msg
 update ctx (Camera node) =
-    Elm3d.Node.update ctx node
+    Node.update ctx node
 
 
 onInput : Elm3d.Input.Event.Event -> Camera msg -> List msg
 onInput ctx (Camera node) =
-    Elm3d.Node.onInput ctx node
+    Node.onInput ctx node
 
 
-withOnFrame : (Elm3d.Node.Context -> msg) -> Camera msg -> Camera msg
+withOnFrame : (Node.Context -> msg) -> Camera msg -> Camera msg
 withOnFrame fn (Camera node) =
-    Camera (Elm3d.Node.withOnFrame fn node)
+    Camera (Node.withOnFrame fn node)
 
 
 withOnInput : (Elm3d.Input.Event.Event -> msg) -> Camera msg -> Camera msg
 withOnInput fn (Camera node) =
-    Camera (Elm3d.Node.withOnInput fn node)
+    Camera (Node.withOnInput fn node)
 
 
 withSize : Float -> Camera msg -> Camera msg
@@ -296,7 +296,7 @@ withOffset props (Camera node) =
 
 toMatrix4 : ( Int, Int ) -> Camera msg -> Matrix4
 toMatrix4 window (Camera node) =
-    case Elm3d.Node.toCameraProjection node of
+    case Node.toCameraProjection node of
         Just projection ->
             case projection of
                 Orthographic props ->
@@ -352,18 +352,18 @@ toOrthographicCamera window { size, range } =
         far
 
 
-updateProjection : Elm3d.Node.Node msg -> (Projection -> Projection) -> Camera msg
+updateProjection : Node.Node msg -> (Projection -> Projection) -> Camera msg
 updateProjection node toProjection =
-    case Elm3d.Node.toCameraProjection node of
+    case Node.toCameraProjection node of
         Nothing ->
             Camera node
 
         Just projection ->
-            Camera (Elm3d.Node.updateProjection (toProjection projection) node)
+            Camera (Node.updateProjection (toProjection projection) node)
 
 
 onlyForPerspective :
-    Elm3d.Node.Node msg
+    Node.Node msg
     -> (Elm3d.Camera.Projection.PerspectiveProps -> Elm3d.Camera.Projection.PerspectiveProps)
     -> Camera msg
 onlyForPerspective node toProps =
@@ -379,7 +379,7 @@ onlyForPerspective node toProps =
 
 
 onlyForIsometric :
-    Elm3d.Node.Node msg
+    Node.Node msg
     -> (Elm3d.Camera.Projection.IsometricProps -> Elm3d.Camera.Projection.IsometricProps)
     -> Camera msg
 onlyForIsometric node toProps =
@@ -434,7 +434,7 @@ applyTransform node mat4 =
     let
         transform : Transform3d
         transform =
-            Elm3d.Node.toTransform3d node
+            Node.toTransform3d node
 
         { x, y, z } =
             Elm3d.Transform3d.toPosition transform
@@ -459,7 +459,7 @@ applyTransform node mat4 =
 
 toOffset : Camera msg -> Vector2
 toOffset (Camera node) =
-    case Elm3d.Node.toCameraProjection node of
+    case Node.toCameraProjection node of
         Nothing ->
             Elm3d.Vector2.zero
 

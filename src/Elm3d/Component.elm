@@ -30,8 +30,8 @@ import Elm3d.Color exposing (Color)
 import Elm3d.Context exposing (Context)
 import Elm3d.Input
 import Elm3d.Input.Event exposing (Event)
+import Elm3d.Internals.Node as Node exposing (Node)
 import Elm3d.Matrix4
-import Elm3d.Node exposing (Node)
 import FixedSet exposing (FixedSet)
 import Html exposing (Html)
 import Html.Attributes
@@ -108,7 +108,7 @@ init { nodes } =
     let
         objFileUrls : List String
         objFileUrls =
-            List.concatMap Elm3d.Node.toObjFileUrls nodes
+            List.concatMap Node.toObjFileUrls nodes
 
         ( assets, assetCmd ) =
             Elm3d.Asset.init { objFileUrls = objFileUrls }
@@ -221,7 +221,7 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
                 time =
                     model.time + dt
 
-                ctx : Elm3d.Node.Context
+                ctx : Node.Context
                 ctx =
                     { dt = dt
                     , time = time
@@ -234,7 +234,7 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
 
                 nodesMsgs : List msg
                 nodesMsgs =
-                    List.concatMap (Elm3d.Node.update ctx) nodes
+                    List.concatMap (Node.update ctx) nodes
             in
             ( Model
                 { model
@@ -264,7 +264,7 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
                 Just event ->
                     let
                         nodesMsgs =
-                            List.concatMap (Elm3d.Node.onInput event) nodes
+                            List.concatMap (Node.onInput event) nodes
 
                         cameraMsgs =
                             Elm3d.Camera.onInput event camera
@@ -332,7 +332,7 @@ subscriptions props model =
 hasAnyUpdateNodes : { props | nodes : List (Node msg), camera : Camera msg } -> Model -> Bool
 hasAnyUpdateNodes { nodes, camera } (Model model) =
     Elm3d.Camera.hasUpdateFunction camera
-        || List.any Elm3d.Node.hasUpdateFunction nodes
+        || List.any Node.hasUpdateFunction nodes
 
 
 {-| This renders the Elm3D view as HTML for the user to see.
@@ -377,15 +377,15 @@ view ({ size, toMsg } as props) (Model model) =
         directionalLight : Maybe (Node msg)
         directionalLight =
             props.nodes
-                |> List.Extra.find Elm3d.Node.isDirectionalLight
+                |> List.Extra.find Node.isDirectionalLight
 
         viewCanvas : Html msg
         viewCanvas =
             props.nodes
                 |> List.concatMap
-                    (Elm3d.Node.toEntity Elm3d.Matrix4.identity
+                    (Node.toEntity Elm3d.Matrix4.identity
                         { camera = Elm3d.Camera.toMatrix4 size props.camera
-                        , light = directionalLight |> Maybe.map Elm3d.Node.toRotation
+                        , light = directionalLight |> Maybe.map Node.toRotation
                         , assets = model.assets
                         }
                     )

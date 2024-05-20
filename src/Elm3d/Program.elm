@@ -37,8 +37,8 @@ import Elm3d.Color exposing (Color)
 import Elm3d.Component
 import Elm3d.Context exposing (Context)
 import Elm3d.Input.Event exposing (Event)
+import Elm3d.Internals.Node as Node exposing (Node)
 import Elm3d.Internals.Program exposing (..)
-import Elm3d.Node exposing (Node)
 import Elm3d.Viewport exposing (Viewport)
 import Html exposing (Html)
 import Html.Attributes
@@ -82,7 +82,7 @@ type alias Props flags model msg =
                     , range = ( 0.01, 1000 )
                     }
             , nodes =
-                [ Elm3d.Node.cube
+                [ Node.cube
                     { size = 2
                     , color = Elm3d.Color.blue
                     }
@@ -286,7 +286,7 @@ mapView v =
     { viewport = v.viewport
     , background = v.background
     , camera = Elm3d.Camera.map User v.camera
-    , nodes = List.map (Elm3d.Node.map User) v.nodes
+    , nodes = List.map (Node.map User) v.nodes
 
     -- , onFrame = User << v.onFrame
     -- , onInput = User << v.onInput
