@@ -31,25 +31,20 @@ type alias Model =
     }
 
 
-type alias SubModel model =
-    { model | angle : Float }
-
-
 init : () -> ( Model, Cmd Msg )
 init _ =
     let
-        ( elm3d, elmCmd ) =
-            Elm3d.Component.init
-                { nodes = nodes state
-                }
-
-        state : SubModel {}
-        state =
+        model =
             { angle = 0
             }
+
+        ( elm3d, elmCmd ) =
+            Elm3d.Component.init
+                { nodes = nodes model
+                }
     in
     ( { elm3d = elm3d
-      , angle = state.angle
+      , angle = model.angle
       }
     , Cmd.map Elm3d elmCmd
     )
@@ -102,7 +97,7 @@ subscriptions model =
 -- VIEW
 
 
-nodes : SubModel a -> List (Node Msg)
+nodes : { model | angle : Float } -> List (Node Msg)
 nodes { angle } =
     [ Elm3d.Node.cube
         { size = 1
