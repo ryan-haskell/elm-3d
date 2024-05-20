@@ -5,10 +5,16 @@ module Elm3d.Viewport exposing
     , toSize
     )
 
-{-|
+{-| This module allows you to control how much space your Elm3d program should take up on the page.
+
+
+# **Creating viewports**
 
 @docs Viewport
 @docs fullscreen, fullscreenAspect, fixed
+
+
+# **Reading data**
 
 @docs isFullscreen, isFullscreenAspect
 @docs toSize
@@ -16,7 +22,7 @@ module Elm3d.Viewport exposing
 -}
 
 
-{-| Represents how much space your 3D element should be.
+{-| Represents how much space your 3D element should take up.
 -}
 type Viewport
     = Fullscreen
@@ -24,7 +30,7 @@ type Viewport
     | Fixed ( Int, Int )
 
 
-{-| Always take up the entire window, regardless of the aspect ratio (16:9, 4:3, etc)
+{-| Always take up the entire window, without a fixed aspect ratio.
 
     toSize ( 1920, 1080 ) fullscreen
         == ( 1920, 1080 )
@@ -41,8 +47,8 @@ fullscreen =
     Fullscreen
 
 
-{-| Take up as much of the window as possible, but **stay centered**
-and **maintain the same aspect ratio** (16:9, 4:3, etc)
+{-| Take up as much of the window as possible, but stay **centered on the page**
+and **maintain the provided aspect ratio** (16:9, 4:3, etc).
 
     toSize ( 1920, 1080 ) (fullscreenAspect (16 / 9))
         == ( 1920, 1080 )
@@ -59,7 +65,7 @@ fullscreenAspect =
     FullscreenAspect
 
 
-{-| Regardless of window size, always be a fixed amount of pixels
+{-| Regardless of window size, always be a fixed amount of pixels. If the window is smaller than that fixed size, users will see a scrollbar.
 
     toSize ( 1920, 1080 ) (fixed ( 400, 300 ))
         == ( 400, 300 )
@@ -120,7 +126,7 @@ isFullscreenAspect window =
             False
 
 
-{-| When given a viewport, returns the size the 3D element should be.
+{-| When given the browser window's dimensions, this returns the size the rendered 3D viewport should be.
 
     toSize ( 800, 600 ) fullscreen
         == ( 800, 600 )
