@@ -8,7 +8,7 @@ module Elm3d.Color exposing
     )
 
 {-| This module allows you to define RGB colors as `Vector4` values. This makes them
-compatible with WebGL and they can support alpha transparency.
+compatible with WebGL and support alpha transparency.
 
 
 # **Creating colors**

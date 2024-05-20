@@ -1,5 +1,5 @@
 # **@ryan-haskell/elm-3d**
-A package for making 3D experiences in Elm
+A package for making 3D games and apps in Elm
 
 ## **Local installation**
 
