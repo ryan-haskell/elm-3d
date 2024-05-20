@@ -1,6 +1,9 @@
 module Elm3d.Input.Event exposing (Event(..))
 
-{-|
+{-| This module allows you to respond to keyboard and mouse events. This is the argument provided with `Elm3d.Node.withOnInput`.
+
+
+# **Events**
 
 @docs Event
 
@@ -10,7 +13,7 @@ import Elm3d.Input.Key exposing (Key)
 import Elm3d.Input.Mouse exposing (Button)
 
 
-{-| When using `Elm3d.Node.onInput`, these are all the kinds of events that can come in.
+{-| When using `Elm3d.Node.onInput`, these are all the kinds of input events that you can expect.
 -}
 type Event
     = KeyPressed Key

@@ -11,17 +11,17 @@ module Elm3d.Node.Public exposing
     , withOnFrame, withOnInput
     )
 
-{-|
+{-| This module allows you to define 3D objects, lights, cameras and more for use in an Elm3d program.
 
 
-# **Node**
+# **Creating nodes**
 
 @docs Node
 @docs cube, block
 @docs obj
 
 
-# **Transform**
+# **Moving, rotating, scaling**
 
 @docs withPosition
 @docs withPositionX, withPositionY, withPositionZ
@@ -33,7 +33,7 @@ module Elm3d.Node.Public exposing
 @docs withScaleX, withScaleY, withScaleZ
 
 
-# **Events**
+# **Handling events**
 
 @docs withOnFrame, withOnInput
 

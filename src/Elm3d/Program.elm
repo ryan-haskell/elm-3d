@@ -1,12 +1,31 @@
 module Elm3d.Program exposing
     ( Program, View
-    , view, sandbox, element
+    , view
+    , sandbox
+    , element
     )
 
-{-|
+{-| This module allows you to quickly create a 3D program. If you would like to embed a 3D scene within an existing Elm app, see the [Elm3d.Component](./Elm3d-Component) module.
+
+
+# **Creating programs**
 
 @docs Program, View
-@docs view, sandbox, element
+
+
+## **1. Stateless programs**
+
+@docs view
+
+
+## **2. Interactive programs**
+
+@docs sandbox
+
+
+## **3. Fully-featured programs**
+
+@docs element
 
 -}
 
@@ -48,7 +67,7 @@ type alias Props flags model msg =
     }
 
 
-{-| Create a stateless Elm3D program with a view:
+{-| Create a stateless Elm3D program from a view record.
 
     main : Program () () ()
     main =
@@ -78,7 +97,7 @@ view view_ =
         }
 
 
-{-| Create an Elm3D program that can track state:
+{-| Create an Elm3D program that can track state.
 
     main : Program () Model Msg
     main =
@@ -127,7 +146,7 @@ sandbox props =
 
 
 {-| Create an Elm3D program that can track state, send
-side effects, and subscribe to events:
+side effects, and subscribe to events.
 
     main : Program Flags Model Msg
     main =

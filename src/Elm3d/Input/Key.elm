@@ -3,7 +3,10 @@ module Elm3d.Input.Key exposing
     , fromCode, toCode
     )
 
-{-|
+{-| This module provides each keyboard key code value as a custom type. Keycode mapping was provided by [gcctech.org](https://gcctech.org/csc/javascript/javascript_keycodes.htm)
+
+
+# **Keys**
 
 @docs Key
 @docs fromCode, toCode

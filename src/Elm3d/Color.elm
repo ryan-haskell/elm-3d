@@ -7,14 +7,24 @@ module Elm3d.Color exposing
     , toHtmlColor
     )
 
-{-|
+{-| This module allows you to define RGB colors as `Vector4` values. This makes them
+compatible with WebGL and they can support alpha transparency.
+
+
+# **Creating colors**
 
 @docs Color
-
 @docs rgb, rgba
+
+
+## **Common colors**
+
 @docs white, black, transparent
 @docs red, green, blue
 @docs magenta, cyan, yellow
+
+
+## **Rendering colors**
 
 @docs toHtmlColor
 
@@ -71,7 +81,7 @@ rgba r g b a =
 
 {-| Completely transparent
 
-transparent == rgba 0 0 0 0
+    transparent == rgba 0 0 0 0
 
 -}
 transparent : Color
@@ -174,6 +184,8 @@ yellow =
 {-| Convert a color to a string that can be used in a CSS style tag
 
     toHtmlColor red == "rgba(255, 0, 0, 1.0)"
+
+    toHtmlColor magenta == "rgba(255, 0, 255, 1.0)"
 
     toHtmlColor black == "rgba(0, 0, 0, 1.0)"
 
