@@ -1,22 +1,18 @@
-# @ryan-haskell/elm-3d
-> A 3D game engine for Elm
+# **@ryan-haskell/elm-3d**
+A package for making 3D experiences in Elm
 
-## Local installation
+## **Local installation**
 
 ```
 elm install ryan-haskell/elm-3d
 ```
 
-## Quick example
+## **Quick example**
 
-<p align="center">
-  <img width="800" height="auto" src="./example/webgl_obj_mtl.gif" />
-</p>
+![Demo of two 3D buildings spinning on a white background](https://github.com/ryan-haskell/elm-3d/blob/main/example/webgl_obj_mtl.gif?raw=true)
 
 
 ```elm
-module Main exposing (main)
-
 import Elm3d.Camera exposing (Camera)
 import Elm3d.Context exposing (Context)
 import Elm3d.Node exposing (Node)
@@ -30,7 +26,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , onAssetsLoaded = AssetsLoaded
+        , onReady = AssetsLoaded
         }
 
 
@@ -55,7 +51,7 @@ init =
 
 type Msg
     = AssetsLoaded
-    | Spin Context Node
+    | Spin Context
 
 
 update : Msg -> Model -> Model
@@ -64,7 +60,7 @@ update msg model =
         AssetsLoaded ->
             model
 
-        Spin ctx node ->
+        Spin ctx ->
             { model | angle = model.angle + ctx.dt }
 
 
@@ -95,7 +91,7 @@ buildings model =
         [ tavern
         , church
         ]
-        |> Elm3d.Node.withOnUpdate Spin
+        |> Elm3d.Node.withOnFrame Spin
         |> Elm3d.Node.withRotationY model.angle
 
 
@@ -114,3 +110,15 @@ church =
         }
         |> Elm3d.Node.withPositionX -1
 ```
+
+## **Disclaimer**
+
+This package was originally created from code for use on my website. Rather than keeping that code private, I extracted out and documented the parts that I thought would be helpful for others creating 3D things in Elm.
+
+I encourage you to use this package to create your own 3D programs. Please feel welcome to modify my open source code if there are any features you would like to add.
+
+Although my code is free to take, and the package is free to use, it __does not come with any promise for future maintenance__. This is a tiny gift from me to the Elm community, and there are many other cool Elm things I want to spend my time on after sharing it.
+
+I would love to see support for _lighting_, _GLTF imports_, _physics_, _raycasting_, and much more. My initial goal for this package was making it the easiest way for folks to quickly create 3D games and experiences with Elm.
+
+If you are personally interested in driving any fraction of that vision forward, I'm happy to chat about those designs and features. Please reach out to me on the [Elm Slack](https://elm-lang.org/community/slack) (`@ryan`) and we can make it happen!

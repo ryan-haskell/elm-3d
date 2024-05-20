@@ -56,13 +56,13 @@ init _ =
 
 type Msg
     = Elm3d Elm3d.Component.Msg
-    | Spin Context (Node Msg)
+    | Spin Context
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Spin ctx node ->
+        Spin ctx ->
             ( { model | angle = model.angle + ctx.dt * 0.5 }
             , Cmd.none
             )
@@ -105,7 +105,7 @@ nodes { angle } =
         }
         |> Elm3d.Node.withRotationX (pi / 6)
         |> Elm3d.Node.withRotationY angle
-        |> Elm3d.Node.withOnUpdate Spin
+        |> Elm3d.Node.withOnFrame Spin
     ]
 
 
@@ -129,11 +129,11 @@ view model =
         , style "padding-bottom" "1rem"
         ]
         [ node "style" [] [ text """
-html, body { height: 100%; margin: 0; }
-body { display: flex; align-items: center; justify-content: center; background: #121212; color: white; }
+            html, body { height: 100%; margin: 0; }
+            body { display: flex; align-items: center; justify-content: center; background: #121212; color: white; }
         """ ]
         , Elm3d.Component.view
-            { showFps = False
+            { showFps = True
             , size = ( 64, 64 )
             , toMsg = Elm3d
             , background = Elm3d.Color.transparent

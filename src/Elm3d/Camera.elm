@@ -1,7 +1,7 @@
 module Elm3d.Camera exposing
     ( Camera
     , orthographic, perspective, isometric
-    , withOnUpdate, withOnInput
+    , withOnFrame, withOnInput
     , withPosition, withRotation
     , withPositionX, withPositionY, withPositionZ
     , withRotationX, withRotationY, withRotationZ
@@ -16,7 +16,7 @@ module Elm3d.Camera exposing
 @docs Camera
 @docs orthographic, perspective, isometric
 
-@docs withOnUpdate, withOnInput
+@docs withOnFrame, withOnInput
 
 @docs withPosition, withRotation
 @docs withPositionX, withPositionY, withPositionZ
@@ -66,9 +66,9 @@ type Camera msg
     = Camera (Node msg)
 
 
-map : { toMsg : a -> b, fromMsg : b -> a } -> Camera a -> Camera b
-map fns (Camera node) =
-    Camera (Elm3d.Node.map fns node)
+map : (a -> b) -> Camera a -> Camera b
+map fn (Camera node) =
+    Camera (Elm3d.Node.map fn node)
 
 
 
@@ -214,22 +214,14 @@ onInput ctx (Camera node) =
     Elm3d.Node.onInput ctx node
 
 
-withOnUpdate : (Elm3d.Node.Context -> Camera msg -> msg) -> Camera msg -> Camera msg
-withOnUpdate fn (Camera node) =
-    Camera
-        (Elm3d.Node.withOnUpdate
-            (\ctx nodeIn -> fn ctx (Camera nodeIn))
-            node
-        )
+withOnFrame : (Elm3d.Node.Context -> msg) -> Camera msg -> Camera msg
+withOnFrame fn (Camera node) =
+    Camera (Elm3d.Node.withOnFrame fn node)
 
 
-withOnInput : (Elm3d.Input.Event.Event -> Camera msg -> msg) -> Camera msg -> Camera msg
+withOnInput : (Elm3d.Input.Event.Event -> msg) -> Camera msg -> Camera msg
 withOnInput fn (Camera node) =
-    Camera
-        (Elm3d.Node.withOnInput
-            (\ctx nodeIn -> fn ctx (Camera nodeIn))
-            node
-        )
+    Camera (Elm3d.Node.withOnInput fn node)
 
 
 withSize : Float -> Camera msg -> Camera msg

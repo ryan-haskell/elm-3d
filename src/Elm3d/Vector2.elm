@@ -3,11 +3,10 @@ module Elm3d.Vector2 exposing
     , new, one, zero
     , positiveX, positiveY
     , fromRecord
-    , normalize, scale
+    , normalize, scale, rotate
     , add, clamp
     , length
     , x, y, toRecord
-    , rotate
     )
 
 {-|
@@ -18,7 +17,7 @@ module Elm3d.Vector2 exposing
 @docs positiveX, positiveY
 @docs fromRecord
 
-@docs normalize, scale
+@docs normalize, scale, rotate
 @docs add, clamp
 @docs length
 
@@ -100,11 +99,29 @@ toRecord vec2 =
     }
 
 
+{-| A unit vector with the same direction as the given vector: `vec / |vec|`
+
+    normalize (new 2 0) == new 1 0
+
+    normalize (new 5 10) == new 0.5 1
+
+-}
 normalize : Vector2 -> Vector2
 normalize vec2 =
     Math.Vector2.normalize vec2
 
 
+{-| Clamp a 2D vector between a min and max vector
+
+    original = new 10 -50
+
+    clamped =
+        original
+            |> clamp (new 0 0) (new 5 5)
+
+    clamped == new 5 0
+
+-}
 clamp : Vector2 -> Vector2 -> Vector2 -> Vector2
 clamp minV maxV valueV =
     let
@@ -126,11 +143,20 @@ clamp minV maxV valueV =
         }
 
 
+{-| Multiply the vector by a scalar: s \* v
+-}
 scale : Float -> Vector2 -> Vector2
 scale constant vec2 =
     Math.Vector2.scale constant vec2
 
 
+{-| Rotate a vector by the given angle
+
+    rotate pi positiveX == negativeX
+
+    rotate (pi / 2) positiveX == positiveY
+
+-}
 rotate : Float -> Vector2 -> Vector2
 rotate angle vec2 =
     let
@@ -152,11 +178,25 @@ rotate angle vec2 =
     fromRecord { x = x2, y = y2 }
 
 
+{-| Add two vectors together
+
+    add (new 1 0) (new 2 1) == new 3 1
+
+    add zero one == one
+
+-}
 add : Vector2 -> Vector2 -> Vector2
 add a b =
     Math.Vector2.add a b
 
 
+{-| Get the length of the current vector
+
+    length (new 1 0) == 1
+
+    length (new 3 4) == 5
+
+-}
 length : Vector2 -> Float
 length =
     Math.Vector2.length

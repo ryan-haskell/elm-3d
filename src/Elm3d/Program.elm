@@ -1,12 +1,12 @@
 module Elm3d.Program exposing
     ( Program, View
-    , static, sandbox, element
+    , view, sandbox, element
     )
 
 {-|
 
 @docs Program, View
-@docs static, sandbox, element
+@docs view, sandbox, element
 
 -}
 
@@ -14,28 +14,24 @@ import Browser
 import Elm3d.Camera exposing (Camera)
 import Elm3d.Color exposing (Color)
 import Elm3d.Component
+import Elm3d.Context exposing (Context)
+import Elm3d.Input.Event exposing (Event)
+import Elm3d.Internals.Program exposing (..)
 import Elm3d.Node exposing (Node)
 import Elm3d.Viewport exposing (Viewport)
 import Html exposing (Html)
 import Html.Attributes
+import Task
 
 
+{-| A program for creating 3D games and web applications
+-}
 type alias Program flags model msg =
-    Platform.Program flags (Model model) (Msg msg)
+    Elm3d.Internals.Program.Program flags model msg
 
 
-type Model model
-    = Model
-        { elm3d : Elm3d.Component.Model
-        , user : model
-        }
-
-
-type Msg msg
-    = Elm3d Elm3d.Component.Msg
-    | User msg
-
-
+{-| This value is returned by your `view` function.
+-}
 type alias View msg =
     { viewport : Viewport
     , background : Color
@@ -45,44 +41,135 @@ type alias View msg =
 
 
 type alias Props flags model msg =
-    { onAssetsLoaded : msg
-    , init : flags -> ( model, Cmd msg )
+    { init : flags -> ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> View msg
     }
 
 
-static : View () -> Program () () ()
-static props =
+{-| Create a stateless Elm3D program with a view:
+
+    main : Program () () ()
+    main =
+        Elm3d.Program.view
+            { viewport = Elm3d.Viewport.fullscreen
+            , background = Elm3d.Color.white
+            , camera =
+                Elm3d.Camera.perspective
+                    { fov = 60
+                    , range = ( 0.01, 1000 )
+                    }
+            , nodes =
+                [ Elm3d.Node.cube
+                    { size = 2
+                    , color = Elm3d.Color.blue
+                    }
+                ]
+            }
+
+-}
+view : View () -> Program () () ()
+view view_ =
     sandbox
-        { onAssetsLoaded = ()
-        , init = \_ -> ()
+        { init = \_ -> ()
         , update = \_ m -> m
-        , view = \_ -> props
+        , view = \_ -> view_
         }
 
 
+{-| Create an Elm3D program that can track state:
+
+    main : Program () Model Msg
+    main =
+        Elm3d.Program.sandbox
+            { init = init
+            , update = update
+            , view = view
+            }
+
+    {-|
+
+        type alias Model =
+            ...
+
+        init : Model
+        init =
+            ...
+
+        type Msg
+            = ...
+
+        update : Msg -> Model -> Model
+        update msg model =
+            ...
+
+        view : Model -> Elm3d.Program.View Msg
+        view model =
+            ...
+
+    -}
+
+-}
 sandbox :
-    { onAssetsLoaded : msg
-    , init : flags -> model
+    { init : flags -> model
     , update : msg -> model -> model
     , view : model -> View msg
     }
     -> Program flags model msg
 sandbox props =
     element
-        { onAssetsLoaded = props.onAssetsLoaded
-        , init = \flags -> ( props.init flags, Cmd.none )
+        { init = \flags -> ( props.init flags, Cmd.none )
         , update = \msg model -> ( props.update msg model, Cmd.none )
         , subscriptions = \_ -> Sub.none
         , view = props.view
         }
 
 
+{-| Create an Elm3D program that can track state, send
+side effects, and subscribe to events:
+
+    main : Program Flags Model Msg
+    main =
+        Elm3d.Program.element
+            { init = init
+            , update = update
+            , subscriptions = subscriptions
+            , view = view
+            }
+
+    {-|
+
+        type alias Flags =
+            ...
+
+        type alias Model =
+            ...
+
+        init : Flags -> ( Model, Cmd Msg )
+        init flags =
+            ...
+
+        type Msg
+            = ...
+
+        update : Msg -> Model -> ( Model, Cmd Msg )
+        update msg model =
+            ...
+
+        subscriptions : Model -> Sub Msg
+        subscriptions model =
+            ...
+
+        view : Model -> Elm3d.Program.View Msg
+        view model =
+            ...
+
+    -}
+
+-}
 element :
-    { onAssetsLoaded : msg
-    , init : flags -> ( model, Cmd msg )
+    { init : flags -> ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , view : model -> View msg
@@ -93,7 +180,7 @@ element props =
         { init = init props
         , update = update props
         , subscriptions = subscriptions props
-        , view = view props
+        , view = viewFn props
         }
 
 
@@ -105,7 +192,7 @@ init props flags =
 
         { nodes } =
             props.view userModel
-                |> mapView props
+                |> mapView
 
         ( elm3dModel, elm3dCmd ) =
             Elm3d.Component.init { nodes = nodes }
@@ -128,7 +215,7 @@ update props msg (Model model) =
             let
                 { nodes, camera } =
                     props.view model.user
-                        |> mapView props
+                        |> mapView
             in
             Elm3d.Component.update
                 { nodes = nodes
@@ -137,6 +224,9 @@ update props msg (Model model) =
                 , toModel = \elm3dModel -> Model { model | elm3d = elm3dModel }
                 , model = model.elm3d
                 , msg = elm3dMsg
+
+                -- , onFrame = Nothing
+                -- , onInput = Nothing
                 }
 
         User userMsg ->
@@ -151,30 +241,15 @@ update props msg (Model model) =
                 userTuple
 
 
-mapView : Props flags model msg -> View msg -> View (Msg msg)
-mapView props v =
-    let
-        fns :
-            { toMsg : msg -> Msg msg
-            , fromMsg : Msg msg -> msg
-            }
-        fns =
-            { toMsg = User
-            , fromMsg =
-                \m ->
-                    case m of
-                        User u ->
-                            u
-
-                        _ ->
-                            -- TODO: Implement this on `init`
-                            props.onAssetsLoaded
-            }
-    in
+mapView : View msg -> View (Msg msg)
+mapView v =
     { viewport = v.viewport
     , background = v.background
-    , camera = Elm3d.Camera.map fns v.camera
-    , nodes = List.map (Elm3d.Node.map fns) v.nodes
+    , camera = Elm3d.Camera.map User v.camera
+    , nodes = List.map (Elm3d.Node.map User) v.nodes
+
+    -- , onFrame = User << v.onFrame
+    -- , onInput = User << v.onInput
     }
 
 
@@ -183,7 +258,7 @@ subscriptions props (Model { user, elm3d }) =
     let
         { nodes, camera } =
             props.view user
-                |> mapView props
+                |> mapView
     in
     Sub.batch
         [ props.subscriptions user
@@ -198,12 +273,12 @@ subscriptions props (Model { user, elm3d }) =
         ]
 
 
-view : Props flags model msg -> Model model -> Html (Msg msg)
-view props (Model { user, elm3d }) =
+viewFn : Props flags model msg -> Model model -> Html (Msg msg)
+viewFn props (Model { user, elm3d }) =
     let
         { viewport, background, camera, nodes } =
             props.view user
-                |> mapView props
+                |> mapView
 
         size : ( Int, Int )
         size =

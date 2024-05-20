@@ -21,7 +21,9 @@ import Browser.Events
 import Elm3d.Asset
 import Elm3d.Camera exposing (Camera)
 import Elm3d.Color exposing (Color)
+import Elm3d.Context exposing (Context)
 import Elm3d.Input
+import Elm3d.Input.Event exposing (Event)
 import Elm3d.Matrix4
 import Elm3d.Node exposing (Node)
 import FixedSet exposing (FixedSet)
@@ -106,6 +108,9 @@ update :
     , msg : Msg
     , camera : Camera msg
     , nodes : List (Node msg)
+
+    -- , onFrame : Maybe (Context -> msg)
+    -- , onInput : Maybe (Event -> msg)
     }
     -> ( model, Cmd msg )
 update ({ camera, nodes, msg, toModel, toMsg } as props) =

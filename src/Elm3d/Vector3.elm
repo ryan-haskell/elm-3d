@@ -3,8 +3,8 @@ module Elm3d.Vector3 exposing
     , new, fromRecord, fromFloat
     , one, zero
     , positiveX, positiveY, positiveZ
-    , x, y, z
     , add
+    , x, y, z
     )
 
 {-|
@@ -14,6 +14,8 @@ module Elm3d.Vector3 exposing
 @docs new, fromRecord, fromFloat
 @docs one, zero
 @docs positiveX, positiveY, positiveZ
+
+@docs add
 
 @docs x, y, z
 
@@ -105,5 +107,13 @@ z vec3 =
     Math.Vector3.getZ vec3
 
 
-add =
-    Math.Vector3.add
+{-| Add two 3D vectors together
+
+    add (new 1 2 3) (new 5 -2 6) == new 6 0 9
+
+    add one zero == one
+
+-}
+add : Vector3 -> Vector3 -> Vector3
+add a b =
+    Math.Vector3.add a b
