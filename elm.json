@@ -9,6 +9,7 @@
         "Elm3d.Component",
         "Elm3d.Viewport",
         "Elm3d.Color",
+        "Elm3d.Float",
         "Elm3d.Vector2",
         "Elm3d.Vector3",
         "Elm3d.Vector4",

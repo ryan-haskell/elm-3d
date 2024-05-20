@@ -4,7 +4,8 @@ import Browser
 import Elm3d.Camera exposing (Camera)
 import Elm3d.Color
 import Elm3d.Component
-import Elm3d.Node exposing (Context, Node)
+import Elm3d.Context exposing (Context)
+import Elm3d.Node exposing (Node)
 import Elm3d.Texture
 import Elm3d.Vector3
 import Html exposing (..)
@@ -101,7 +102,7 @@ nodes : { model | angle : Float } -> List (Node Msg)
 nodes { angle } =
     [ Elm3d.Node.cube
         { size = 1
-        , texture = Elm3d.Texture.color Elm3d.Color.magenta
+        , color = Elm3d.Color.magenta
         }
         |> Elm3d.Node.withRotationX (pi / 6)
         |> Elm3d.Node.withRotationY angle
