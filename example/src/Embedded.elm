@@ -6,7 +6,6 @@ import Elm3d.Color
 import Elm3d.Component
 import Elm3d.Context exposing (Context)
 import Elm3d.Node exposing (Node)
-import Elm3d.Texture
 import Elm3d.Vector3
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -32,20 +31,25 @@ type alias Model =
     }
 
 
+type alias SubModel model =
+    { model | angle : Float }
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
     let
         ( elm3d, elmCmd ) =
             Elm3d.Component.init
-                { nodes = nodes model
+                { nodes = nodes state
                 }
 
-        model =
+        state : SubModel {}
+        state =
             { angle = 0
             }
     in
     ( { elm3d = elm3d
-      , angle = model.angle
+      , angle = state.angle
       }
     , Cmd.map Elm3d elmCmd
     )
@@ -98,7 +102,7 @@ subscriptions model =
 -- VIEW
 
 
-nodes : { model | angle : Float } -> List (Node Msg)
+nodes : SubModel a -> List (Node Msg)
 nodes { angle } =
     [ Elm3d.Node.cube
         { size = 1

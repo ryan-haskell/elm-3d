@@ -25,11 +25,11 @@ import Browser
 import Browser.Dom
 import Browser.Events
 import Elm3d.Asset
-import Elm3d.Camera exposing (Camera)
 import Elm3d.Color exposing (Color)
 import Elm3d.Context exposing (Context)
 import Elm3d.Input
 import Elm3d.Input.Event exposing (Event)
+import Elm3d.Internals.Camera as Camera exposing (Camera)
 import Elm3d.Internals.Node as Node exposing (Node)
 import Elm3d.Matrix4
 import FixedSet exposing (FixedSet)
@@ -230,7 +230,7 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
 
                 cameraMsgs : List msg
                 cameraMsgs =
-                    Elm3d.Camera.update ctx camera
+                    Camera.update ctx camera
 
                 nodesMsgs : List msg
                 nodesMsgs =
@@ -267,7 +267,7 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
                             List.concatMap (Node.onInput event) nodes
 
                         cameraMsgs =
-                            Elm3d.Camera.onInput event camera
+                            Camera.onInput event camera
                     in
                     ( Model { model | input = input } |> toModel
                     , (cameraMsgs ++ nodesMsgs)
@@ -331,7 +331,7 @@ subscriptions props model =
 
 hasAnyUpdateNodes : { props | nodes : List (Node msg), camera : Camera msg } -> Model -> Bool
 hasAnyUpdateNodes { nodes, camera } (Model model) =
-    Elm3d.Camera.hasUpdateFunction camera
+    Camera.hasUpdateFunction camera
         || List.any Node.hasUpdateFunction nodes
 
 
@@ -384,7 +384,7 @@ view ({ size, toMsg } as props) (Model model) =
             props.nodes
                 |> List.concatMap
                     (Node.toEntity Elm3d.Matrix4.identity
-                        { camera = Elm3d.Camera.toMatrix4 size props.camera
+                        { camera = Camera.toMatrix4 size props.camera
                         , light = directionalLight |> Maybe.map Node.toRotation
                         , assets = model.assets
                         }

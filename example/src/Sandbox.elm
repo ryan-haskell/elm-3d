@@ -10,7 +10,6 @@ import Elm3d.Isometric
 import Elm3d.Node
 import Elm3d.Program exposing (Program)
 import Elm3d.Rotation
-import Elm3d.Texture exposing (Texture)
 import Elm3d.Vector2 exposing (Vector2)
 import Elm3d.Vector3 exposing (Vector3)
 import Elm3d.Viewport
@@ -191,8 +190,8 @@ update msg model =
                         Elm3d.Vector2.zero
 
                     else if model.isIsometricCamera then
-                        Elm3d.Isometric.toOffsetVector
-                            { angle = cameraRotation
+                        Elm3d.Isometric.toInputVector
+                            { spin = cameraSpin
                             , input = input
                             }
 
@@ -284,7 +283,7 @@ ground : Node
 ground =
     Elm3d.Node.block
         { size = Elm3d.Vector3.new 50 2 50
-        , texture = Elm3d.Texture.rgb 0 191 128
+        , color = Elm3d.Color.rgb 0 191 128
         }
         |> Elm3d.Node.withPositionY -1
 
@@ -330,7 +329,7 @@ church =
         { url = "/assets/medieval_hexagon/building_church_blue.obj"
         }
         |> Elm3d.Node.withScale (Elm3d.Vector3.fromFloat 2)
-        |> Elm3d.Node.rotateY (pi / 2)
+        |> Elm3d.Node.withRotationY (pi / 2)
         |> Elm3d.Node.withPositionX -7
         |> Elm3d.Node.withPositionZ -2
 
@@ -412,15 +411,15 @@ isometricCamera model =
     Elm3d.Camera.isometric
         { size = model.cameraZoom
         , range = ( 0.01, 1000 )
-        , rotation = cameraRotation
-        , angle = pi / 6
+        , spin = cameraSpin
+        , incline = pi / 6
         , distance = 100
         , offset = model.cameraOffset
         }
 
 
-cameraRotation : Float
-cameraRotation =
+cameraSpin : Float
+cameraSpin =
     pi / 4
 
 
@@ -447,7 +446,7 @@ beardedGuy model =
 -- VILLAGERS & STUFF
 
 
-swayBackAndForth : Elm3d.Node.Context -> Node -> ( Node, Cmd Msg )
+swayBackAndForth : Context -> Node -> ( Node, Cmd Msg )
 swayBackAndForth { time } node =
     ( node
     , Cmd.none

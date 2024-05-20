@@ -24,8 +24,8 @@ type alias PerspectiveProps =
 type alias IsometricProps =
     { size : Float
     , range : ( Float, Float )
-    , rotation : Float
-    , angle : Float
+    , spin : Float
+    , incline : Float
     , distance : Float
     , offset : Vector2
     }
