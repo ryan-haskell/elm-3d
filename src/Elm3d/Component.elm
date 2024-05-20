@@ -1,17 +1,23 @@
 module Elm3d.Component exposing
     ( Model, init
     , Msg, update, subscriptions
-    , View, view
-    , toWindowSize
+    , view
     )
 
-{-|
+{-| This module allows you to embed Elm3D anywhere you like in an existing application. If you want your whole page to be an Elm3D program, use [Elm3d.Program](./Elm3d-Program) instead.
+
+
+# **Using the component**
+
+It's important that `init`, `update`, `subscriptions`, and `view` are all wired up to your Elm application, otherwise things won't work as expected.
+
+**Follow the code snippets below** with each type and function to see how you can add this to an existing Elm program.
+
+For a full working example, I recommend taking a look at [Embedded.elm](https://github.com/ryan-haskell/elm-3d/blob/main/example/src/Embedded.elm) from the GitHub repo.
 
 @docs Model, init
 @docs Msg, update, subscriptions
-@docs View, view
-
-@docs toWindowSize
+@docs view
 
 -}
 
@@ -37,21 +43,28 @@ import Time
 import WebGL
 
 
+{-| Tracks the state of the Elm3D component.
+
+    -- 1️⃣ Add this to your existing `Model`
+
+    import Elm3d.Component
+
+    type alias Model =
+        { ...
+        , elm3d : Elm3d.Component.Model
+        }
+
+-}
 type Model
     = Model
         { time : Float
-        , window : ( Int, Int )
         , input : Elm3d.Input.Model
         , assets : Elm3d.Asset.Model
         , fps : FixedSet Float
         }
 
 
-toWindowSize : Model -> ( Int, Int )
-toWindowSize (Model model) =
-    model.window
-
-
+{-| -}
 type alias View msg =
     { background : Color
     , camera : Camera msg
@@ -59,6 +72,34 @@ type alias View msg =
     }
 
 
+{-| Initialize the Elm3D component, and fire off any initial commands.
+
+    -- 2️⃣ Add this in your `init` function
+
+    import Elm3d.Component
+    import Elm3d.Node exposing (Node)
+
+
+    init : Flags -> ( Model, Cmd Msg )
+    init flags =
+        let
+            (elm3d, elm3dCmd) =
+                Elm3d.Component.init
+                    { nodes = nodes
+                    }
+        in
+        ( { ...
+          , elm3d = elm3d
+          }
+        , Cmd.map Elm3d elm3dCmd
+        )
+
+
+    nodes : List (Node Msg)
+    nodes =
+        ...
+
+-}
 init :
     { nodes : List (Node msg)
     }
@@ -74,16 +115,11 @@ init { nodes } =
     in
     ( Model
         { time = 0.0
-        , window = ( 0, 0 )
         , input = Elm3d.Input.init
         , assets = assets
         , fps = FixedSet.init { maxSize = 30 }
         }
-    , Cmd.batch
-        [ Browser.Dom.getViewport
-            |> Task.perform Viewport
-        , Cmd.map Asset assetCmd
-        ]
+    , Cmd.map Asset assetCmd
     )
 
 
@@ -91,16 +127,54 @@ init { nodes } =
 -- UPDATE
 
 
+{-| These messages are handled by the update function.
+
+    -- 3️⃣ Add this to your `Msg` type
+
+    import Elm3d.Component
+
+    type Msg
+        = ...
+        | Elm3d Elm3d.Component.Msg
+
+-}
 type Msg
     = Frame Float
-    | Viewport Browser.Dom.Viewport
-    | Resize Int Int
     | Input Elm3d.Input.RawEvent
     | Asset Elm3d.Asset.Msg
     | Focus Browser.Events.Visibility
     | ContextMenu
 
 
+{-| Updates the Elm3d `Model`, based on the the current `Msg` coming in.
+
+    -- 4️⃣ Add this in your `update` function
+
+    import Elm3d.Component
+    import Elm3d.Camera exposing (Camera)
+
+
+    update : Msg -> Model -> ( Model, Cmd Msg )
+    update msg model =
+        case msg of
+            ...
+
+            Elm3d elm3dMsg ->
+                Elm3d.Component.update
+                    { msg = elm3dMsg
+                    , model = model.elm3d
+                    , toModel = \elm3d -> { model | elm3d = elm3d }
+                    , toMsg = Elm3d
+                    , camera = camera
+                    , nodes = nodes
+                    }
+
+
+    camera : Camera msg
+    camera =
+        ...
+
+-}
 update :
     { toMsg : Msg -> msg
     , toModel : Model -> model
@@ -173,24 +247,6 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
                 |> Cmd.batch
             )
 
-        Viewport { scene } ->
-            ( Model
-                { model
-                    | window =
-                        ( Basics.floor scene.width
-                        , Basics.floor scene.height
-                        )
-                }
-                |> toModel
-            , Cmd.none
-            )
-
-        Resize width height ->
-            ( Model { model | window = ( width, height ) }
-                |> toModel
-            , Cmd.none
-            )
-
         Focus _ ->
             ( Model { model | input = Elm3d.Input.releaseAllKeys model.input }
                 |> toModel
@@ -225,10 +281,30 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
                     )
 
 
+{-| This needs to be wired up for input events and any on frame listeners.
+
+    -- 5️⃣ Add this in your `subscriptions` function
+
+    import Elm3d.Component
+    import Elm3d.Camera exposing (Camera)
+
+
+    subscriptions : Model -> Sub Msg
+    subscriptions model =
+        Sub.batch
+            [ ...
+            , Elm3d.Component.subscriptions
+                { fpsLimit = Nothing
+                , camera = camera
+                , nodes = nodes
+                }
+            ]
+
+-}
 subscriptions :
     { fpsLimit : Maybe Float
-    , nodes : List (Node msg)
     , camera : Camera msg
+    , nodes : List (Node msg)
     }
     -> Model
     -> Sub Msg
@@ -248,7 +324,6 @@ subscriptions props model =
 
           else
             Sub.none
-        , Browser.Events.onResize Resize
         , Elm3d.Input.subscriptions Input
         , Browser.Events.onVisibilityChange Focus
         ]
@@ -260,6 +335,30 @@ hasAnyUpdateNodes { nodes, camera } (Model model) =
         || List.any Elm3d.Node.hasUpdateFunction nodes
 
 
+{-| This renders the Elm3D view as HTML for the user to see.
+
+    -- 6️⃣ Add this anywhere in your `view` function
+
+
+    import Elm3d.Color
+    import Elm3d.Component
+    import Html exposing (..)
+
+    view : Model -> Html Msg
+    view model =
+        div []
+            [ h1 [] [ text "My app!" ]
+            , Elm3d.Component.view
+                { showFps = False
+                , size = ( 400, 300 )
+                , toMsg = Elm3d
+                , background = Elm3d.Color.transparent
+                , camera = camera
+                , nodes = nodes
+                }
+            ]
+
+-}
 view :
     { showFps : Bool
     , size : ( Int, Int )

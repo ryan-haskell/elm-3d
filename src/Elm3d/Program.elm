@@ -30,6 +30,8 @@ module Elm3d.Program exposing
 -}
 
 import Browser
+import Browser.Dom
+import Browser.Events
 import Elm3d.Camera exposing (Camera)
 import Elm3d.Color exposing (Color)
 import Elm3d.Component
@@ -219,10 +221,13 @@ init props flags =
     ( Model
         { user = userModel
         , elm3d = elm3dModel
+        , window = ( 0, 0 )
         }
     , Cmd.batch
         [ userCmd |> Cmd.map User
         , elm3dCmd |> Cmd.map Elm3d
+        , Browser.Dom.getViewport
+            |> Task.perform Viewport
         ]
     )
 
@@ -259,6 +264,22 @@ update props msg (Model model) =
                 (\userCmd -> Cmd.map User userCmd)
                 userTuple
 
+        Resize width height ->
+            ( Model { model | window = ( width, height ) }
+            , Cmd.none
+            )
+
+        Viewport { scene } ->
+            ( Model
+                { model
+                    | window =
+                        ( Basics.floor scene.width
+                        , Basics.floor scene.height
+                        )
+                }
+            , Cmd.none
+            )
+
 
 mapView : View msg -> View (Msg msg)
 mapView v =
@@ -289,11 +310,12 @@ subscriptions props (Model { user, elm3d }) =
             }
             elm3d
             |> Sub.map Elm3d
+        , Browser.Events.onResize Resize
         ]
 
 
 viewFn : Props flags model msg -> Model model -> Html (Msg msg)
-viewFn props (Model { user, elm3d }) =
+viewFn props (Model { user, elm3d, window }) =
     let
         { viewport, background, camera, nodes } =
             props.view user
@@ -302,7 +324,7 @@ viewFn props (Model { user, elm3d }) =
         size : ( Int, Int )
         size =
             Elm3d.Viewport.toSize
-                (Elm3d.Component.toWindowSize elm3d)
+                window
                 viewport
 
         viewElm3dCanvas : Html (Msg msg)
