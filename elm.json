@@ -6,9 +6,11 @@
     "version": "1.0.0",
     "exposed-modules": [
         "Elm3d.Program",
+        "Elm3d.Camera",
         "Elm3d.Component",
         "Elm3d.Viewport",
         "Elm3d.Color",
+        "Elm3d.Angle",
         "Elm3d.Float",
         "Elm3d.Isometric",
         "Elm3d.Vector2",

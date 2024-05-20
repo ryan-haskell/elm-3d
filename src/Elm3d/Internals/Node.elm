@@ -8,7 +8,7 @@ module Elm3d.Internals.Node exposing
     , withScaleX, withScaleY, withScaleZ
     , moveX, moveY, moveZ
     , rotateX, rotateY, rotateZ
-    , Context, withOnFrame
+    , withOnFrame
     , withOnInput
     , map
     , toPosition, toRotation, toScale
@@ -41,7 +41,7 @@ module Elm3d.Internals.Node exposing
 
 ### **Updating nodes**
 
-@docs Context, withOnFrame
+@docs withOnFrame
 @docs withOnInput
 @docs map
 

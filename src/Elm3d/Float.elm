@@ -27,6 +27,8 @@ This is a nice way to animate a numeric value each frame when working with `Elm3
             , step = dt * zoomSpeed
             }
 
+**Working with angles?** Use [Elm3d.Angle.lerp](./Elm3d-Angle#lerp) instead! It prevents crazy stuff happening when animating across the `0` / `2π` threshold. Unless you like unpredictable 360-no-scope spins- then definitely use this lerp!
+
 -}
 lerp :
     { from : Float

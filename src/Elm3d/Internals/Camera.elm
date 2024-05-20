@@ -1,6 +1,7 @@
 module Elm3d.Internals.Camera exposing (..)
 
 import Elm3d.Camera.Projection exposing (..)
+import Elm3d.Context exposing (Context)
 import Elm3d.Input.Event
 import Elm3d.Internals.Node as Node exposing (Node)
 import Elm3d.Isometric
@@ -21,7 +22,7 @@ hasUpdateFunction (Camera node) =
     Node.hasUpdateFunction node
 
 
-update : Node.Context -> Camera msg -> List msg
+update : Context -> Camera msg -> List msg
 update ctx (Camera node) =
     Node.update ctx node
 

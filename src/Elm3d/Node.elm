@@ -10,6 +10,7 @@ module Elm3d.Node exposing
     , withScale
     , withScaleX, withScaleY, withScaleZ
     , withOnFrame, withOnInput
+    , map
     )
 
 {-| This module allows you to define 3D objects, lights, cameras and more for use in an Elm3d program.
@@ -38,6 +39,7 @@ module Elm3d.Node exposing
 # **Handling events**
 
 @docs withOnFrame, withOnInput
+@docs map
 
 -}
 
@@ -278,6 +280,10 @@ withScaleZ props node =
     Node.withScaleZ props node
 
 
+
+-- HANDLING EVENTS
+
+
 {-| Provide a message to call every frame.
 
     import Elm3d.Context exposing (Context)
@@ -285,7 +291,7 @@ withScaleZ props node =
     type Msg
         = TavernOnFrame Context
 
-    myCube : Node msg
+    myCube : Node Msg
     myCube =
         cube { size = 1, color = red }
             |> withOnFrame TavernOnFrame
@@ -312,3 +318,25 @@ withOnFrame props node =
 withOnInput : (Elm3d.Input.Event.Event -> msg) -> Node msg -> Node msg
 withOnInput props node =
     Node.withOnInput props node
+
+
+{-| Convert a node with one `msg` type into another. This is commonly needed when nesting
+the Elm Architecture with a page or component:
+
+    import Pages.Dashboard
+
+    type Msg
+        = Dashboard Pages.Dashboard.Msg
+
+    node : Node Pages.Dashboard.Msg
+    node =
+        ...
+
+    newNode : Node Msg
+    newNode =
+        map Dashboard node
+
+-}
+map : (msg1 -> msg2) -> Node msg1 -> Node msg2
+map fn node =
+    Node.map fn node

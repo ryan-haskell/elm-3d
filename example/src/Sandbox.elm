@@ -1,5 +1,6 @@
 module Sandbox exposing (main)
 
+import Elm3d.Angle
 import Elm3d.Camera
 import Elm3d.Color exposing (Color)
 import Elm3d.Context exposing (Context)
@@ -9,7 +10,6 @@ import Elm3d.Input.Key as Key exposing (Key(..))
 import Elm3d.Isometric
 import Elm3d.Node
 import Elm3d.Program exposing (Program)
-import Elm3d.Rotation
 import Elm3d.Vector2 exposing (Vector2)
 import Elm3d.Vector3 exposing (Vector3)
 import Elm3d.Viewport
@@ -204,7 +204,7 @@ update msg model =
                         model.playerRotation
 
                     else
-                        Elm3d.Rotation.lerp
+                        Elm3d.Angle.lerp
                             { from = model.playerRotation
                             , to = atan2 (Elm3d.Vector2.x delta) (Elm3d.Vector2.y delta)
                             , step = ctx.dt * 10

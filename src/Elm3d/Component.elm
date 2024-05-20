@@ -221,7 +221,7 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
                 time =
                     model.time + dt
 
-                ctx : Node.Context
+                ctx : Context
                 ctx =
                     { dt = dt
                     , time = time
