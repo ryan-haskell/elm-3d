@@ -75,8 +75,7 @@ view model =
     , camera =
         Elm3d.Camera.perspective
             { fov = 60
-            , near = 1
-            , far = 100
+            , range = ( 1, 100 )
             }
             |> Elm3d.Camera.withPositionZ 5
     , nodes =

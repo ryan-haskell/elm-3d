@@ -11,22 +11,19 @@ type Projection
 
 type alias OrthographicProps =
     { size : Float
-    , near : Float
-    , far : Float
+    , range : ( Float, Float )
     }
 
 
 type alias PerspectiveProps =
     { fov : Float
-    , near : Float
-    , far : Float
+    , range : ( Float, Float )
     }
 
 
 type alias IsometricProps =
     { size : Float
-    , near : Float
-    , far : Float
+    , range : ( Float, Float )
     , rotation : Float
     , angle : Float
     , distance : Float

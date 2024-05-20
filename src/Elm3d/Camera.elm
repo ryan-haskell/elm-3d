@@ -77,8 +77,7 @@ map fn (Camera node) =
 
 orthographic :
     { size : Float
-    , near : Float
-    , far : Float
+    , range : ( Float, Float )
     }
     -> Camera msg
 orthographic props =
@@ -87,8 +86,7 @@ orthographic props =
 
 perspective :
     { fov : Float
-    , near : Float
-    , far : Float
+    , range : ( Float, Float )
     }
     -> Camera msg
 perspective props =
@@ -100,8 +98,7 @@ isometric :
     , angle : Float
     , rotation : Float
     , distance : Float
-    , near : Float
-    , far : Float
+    , range : ( Float, Float )
     , offset : Vector2
     }
     -> Camera msg
@@ -251,13 +248,13 @@ withNear props (Camera node) =
         (\projection ->
             case projection of
                 Orthographic data ->
-                    Orthographic { data | near = props }
+                    Orthographic { data | range = Tuple.mapFirst (\_ -> props) data.range }
 
                 Perspective data ->
-                    Perspective { data | near = props }
+                    Perspective { data | range = Tuple.mapFirst (\_ -> props) data.range }
 
                 Isometric data ->
-                    Isometric { data | near = props }
+                    Isometric { data | range = Tuple.mapFirst (\_ -> props) data.range }
         )
 
 
@@ -267,13 +264,13 @@ withFar props (Camera node) =
         (\projection ->
             case projection of
                 Orthographic data ->
-                    Orthographic { data | far = props }
+                    Orthographic { data | range = Tuple.mapSecond (\_ -> props) data.range }
 
                 Perspective data ->
-                    Perspective { data | far = props }
+                    Perspective { data | range = Tuple.mapSecond (\_ -> props) data.range }
 
                 Isometric data ->
-                    Isometric { data | far = props }
+                    Isometric { data | range = Tuple.mapSecond (\_ -> props) data.range }
         )
 
 
@@ -310,8 +307,11 @@ toMatrix4 window (Camera node) =
                     toOrthographicCamera window props
                         |> applyIsometricTransform props
 
-                Perspective { fov, near, far } ->
+                Perspective { fov, range } ->
                     let
+                        ( near, far ) =
+                            range
+
                         ( width, height ) =
                             Tuple.mapBoth
                                 Basics.toFloat
@@ -328,9 +328,12 @@ toMatrix4 window (Camera node) =
             Math.Matrix4.identity
 
 
-toOrthographicCamera : ( Int, Int ) -> { props | size : Float, near : Float, far : Float } -> Matrix4
-toOrthographicCamera window { size, near, far } =
+toOrthographicCamera : ( Int, Int ) -> { props | size : Float, range : ( Float, Float ) } -> Matrix4
+toOrthographicCamera window { size, range } =
     let
+        ( near, far ) =
+            range
+
         ( width, height ) =
             Tuple.mapBoth Basics.toFloat Basics.toFloat window
 

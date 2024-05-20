@@ -63,7 +63,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Spin ctx ->
-            ( { model | angle = model.angle + ctx.dt * 0.5 }
+            ( { model | angle = model.angle + ctx.dt }
             , Cmd.none
             )
 
@@ -86,7 +86,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     model.elm3d
         |> Elm3d.Component.subscriptions
-            { fpsLimit = Just 30
+            { fpsLimit = Nothing
             , nodes = nodes model
             , camera = camera
             }
@@ -113,8 +113,7 @@ camera : Camera Msg
 camera =
     Elm3d.Camera.orthographic
         { size = 2
-        , near = 1
-        , far = 1000
+        , range = ( 1, 1000 )
         }
         |> Elm3d.Camera.withPositionZ 500
 

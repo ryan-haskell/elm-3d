@@ -1,7 +1,6 @@
 module Sandbox exposing (main)
 
 import Elm3d.Camera
-import Elm3d.Camera.Isometric
 import Elm3d.Color exposing (Color)
 import Elm3d.Context exposing (Context)
 import Elm3d.Float
@@ -393,8 +392,7 @@ perspectiveCamera model =
     in
     Elm3d.Camera.perspective
         { fov = 60
-        , near = 0.01
-        , far = 1000
+        , range = ( 0.01, 1000 )
         }
         |> Elm3d.Camera.withPosition
             (Elm3d.Vector3.add model.playerPosition
@@ -411,10 +409,9 @@ perspectiveCamera model =
 
 isometricCamera : Model -> Camera
 isometricCamera model =
-    Elm3d.Camera.Isometric.new
+    Elm3d.Camera.isometric
         { size = model.cameraZoom
-        , near = 0.01
-        , far = 1000
+        , range = ( 0.01, 1000 )
         , rotation = cameraRotation
         , angle = pi / 6
         , distance = 100
