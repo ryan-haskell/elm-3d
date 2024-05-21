@@ -27,12 +27,12 @@ import Browser.Events
 import Elm3d.Asset
 import Elm3d.Color exposing (Color)
 import Elm3d.Context exposing (Context)
+import Elm3d.FixedSet as FixedSet exposing (FixedSet)
 import Elm3d.Input
 import Elm3d.Input.Event exposing (Event)
 import Elm3d.Internals.Camera as Camera exposing (Camera)
 import Elm3d.Internals.Node as Node exposing (Node)
 import Elm3d.Matrix4
-import FixedSet exposing (FixedSet)
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events

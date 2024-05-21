@@ -24,13 +24,22 @@ module Elm3d.Node exposing
 @docs group
 
 
-# **Moving, rotating, scaling**
+# **Transforming nodes**
+
+
+## **Position**
 
 @docs withPosition
 @docs withPositionX, withPositionY, withPositionZ
 
+
+## **Rotation**
+
 @docs withRotation
 @docs withRotationX, withRotationY, withRotationZ
+
+
+## **Scale**
 
 @docs withScale
 @docs withScaleX, withScaleY, withScaleZ
@@ -86,7 +95,7 @@ cube props =
     blueBlock : Node msg
     blueBlock =
         block
-            { size = Elm3d.Vector3.size 1 2 4
+            { size = Elm3d.Vector3.new 1 2 4
             , color = Elm3d.Color.blue
             }
 

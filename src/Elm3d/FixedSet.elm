@@ -1,4 +1,4 @@
-module FixedSet exposing (FixedSet, init, insert, toAverage)
+module Elm3d.FixedSet exposing (FixedSet, init, insert, toAverage)
 
 import Dict exposing (Dict)
 
