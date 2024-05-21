@@ -54,7 +54,7 @@ module Elm3d.Internals.Node exposing
 @docs toScaleX, toScaleY, toScaleZ
 
 
-### TODO: Elm3d.Internals.Node
+## Internals
 
 @docs toEntity, update, toObjFileUrls, onInput, camera, hasUpdateFunction, updateProjection, toCameraProjection, toTransform3d, isDirectionalLight
 
@@ -502,7 +502,7 @@ toEntity groupMatrix props ((Node { transform, kind }) as node) =
                             ]
 
                         _ ->
-                            -- TODO
+                            -- TODO: Support more textures
                             []
 
                 Nothing ->

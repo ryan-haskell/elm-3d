@@ -64,8 +64,6 @@ type alias Camera msg =
 
 {-| Create a camera with an orthographic projection.
 
-![📸 TODO: Animation of cubes in an orthographic projection](#todo)
-
     camera : Camera msg
     camera =
         orthographic
@@ -87,8 +85,6 @@ orthographic props =
 
 
 {-| Create a camera with a perspective projection.
-
-![📸 TODO: Animation of cubes in an perspective projection](#todo)
 
     camera : Camera msg
     camera =
