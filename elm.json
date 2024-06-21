@@ -3,7 +3,7 @@
     "name": "ryan-haskell/elm-3d",
     "summary": "EXPERIMENTAL: Create 3D stuff with Elm",
     "license": "BSD-3-Clause",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "exposed-modules": [
         "Elm3d.Program",
         "Elm3d.Camera",
@@ -12,6 +12,7 @@
         "Elm3d.Color",
         "Elm3d.Angle",
         "Elm3d.Float",
+        "Elm3d.Frame",
         "Elm3d.Isometric",
         "Elm3d.Vector2",
         "Elm3d.Vector3",
