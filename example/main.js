@@ -1,4 +1,4 @@
-import Elm from './src/Embedded.elm'
+import Elm from './src/Sandbox.elm'
 
 Elm.init({
   node: document.getElementById('app')

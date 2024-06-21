@@ -4,6 +4,8 @@ module Elm3d.Input exposing
     , init
     , isKeyPressed
     , isLeftClickPressed
+    , isMiddleClickPressed
+    , isRightClickPressed
     , releaseAllKeys
     , subscriptions
     , update
@@ -44,6 +46,16 @@ isKeyPressed (Model { pressed }) key =
 isLeftClickPressed : Model -> Bool
 isLeftClickPressed (Model { mouse }) =
     mouse.left
+
+
+isMiddleClickPressed : Model -> Bool
+isMiddleClickPressed (Model { mouse }) =
+    mouse.middle
+
+
+isRightClickPressed : Model -> Bool
+isRightClickPressed (Model { mouse }) =
+    mouse.right
 
 
 releaseAllKeys : Model -> Model
