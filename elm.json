@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "ryan-haskell/elm-3d",
-    "summary": "EXPERIMENTAL: Create 3D stuff with Elm",
+    "summary": "A package for making 3D games and apps in Elm",
     "license": "BSD-3-Clause",
     "version": "2.1.0",
     "exposed-modules": [
