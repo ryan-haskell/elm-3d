@@ -4,7 +4,7 @@ import Browser
 import Elm3d.Camera exposing (Camera)
 import Elm3d.Color
 import Elm3d.Component
-import Elm3d.Context exposing (Context)
+import Elm3d.Frame exposing (Frame)
 import Elm3d.Node exposing (Node)
 import Elm3d.Vector3
 import Html exposing (..)
@@ -56,14 +56,14 @@ init _ =
 
 type Msg
     = Elm3d Elm3d.Component.Msg
-    | Spin Context
+    | Spin Frame
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Spin ctx ->
-            ( { model | angle = model.angle + ctx.dt }
+        Spin frame ->
+            ( { model | angle = model.angle + frame.dt }
             , Cmd.none
             )
 

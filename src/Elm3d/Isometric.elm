@@ -17,7 +17,7 @@ import Elm3d.Vector2 exposing (Vector2)
 This function takes in the horizontal angle your isometric camera is using to rotate the players input by the correct amount
 
     import Elm3d.Camera
-    import Elm3d.Context exposing (Context)
+    import Elm3d.Frame exposing (Frame)
 
     cameraSpin : Float
     cameraSpin =
@@ -30,12 +30,12 @@ This function takes in the horizontal angle your isometric camera is using to ro
             , spin = cameraSpin
             }
 
-    toMovementDelta : Context -> Vector2
-    toMovementDelta ctx =
+    toMovementDelta : Frame -> Vector2
+    toMovementDelta frame =
         toInputVector
             { spin = cameraSpin
             , input =
-                Elm3d.Context.toInputVector ctx
+                Elm3d.Frame.toInputVector frame
                     { x = ( KEY_ARROW_LEFT, KEY_ARROW_RIGHT )
                     , y = ( KEY_ARROW_DOWN, KEY_ARROW_UP )
                     }

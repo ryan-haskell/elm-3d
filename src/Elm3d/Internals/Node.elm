@@ -63,9 +63,9 @@ module Elm3d.Internals.Node exposing
 import Elm3d.Asset
 import Elm3d.Camera.Projection exposing (Projection(..))
 import Elm3d.Color exposing (Color)
-import Elm3d.Context
 import Elm3d.Entities.Block.TextureColor
 import Elm3d.Entities.Obj
+import Elm3d.Frame
 import Elm3d.Input.Event
 import Elm3d.Input.Key
 import Elm3d.Matrix4 exposing (Matrix4)
@@ -117,7 +117,7 @@ mapKind fn kind =
 type alias Internals msg =
     { kind : Kind msg
     , transform : Transform3d
-    , onFrame : Maybe (Context -> msg)
+    , onFrame : Maybe (Frame -> msg)
     , onInput : Maybe (Elm3d.Input.Event.Event -> msg)
     }
 
@@ -126,7 +126,7 @@ mapInternals : (a -> b) -> Internals a -> Internals b
 mapInternals fn node =
     { kind = mapKind fn node.kind
     , transform = node.transform
-    , onFrame = Maybe.map (\onFrame_ ctx -> fn (onFrame_ ctx)) node.onFrame
+    , onFrame = Maybe.map (\onFrame_ frame -> fn (onFrame_ frame)) node.onFrame
     , onInput = Maybe.map (\onInput_ event -> fn (onInput_ event)) node.onInput
     }
 
@@ -354,11 +354,11 @@ rotateZ delta (Node node) =
 -- ON TICK & USER INPUT
 
 
-type alias Context =
-    Elm3d.Context.Context
+type alias Frame =
+    Elm3d.Frame.Frame
 
 
-withOnFrame : (Context -> msg) -> Node msg -> Node msg
+withOnFrame : (Frame -> msg) -> Node msg -> Node msg
 withOnFrame props (Node node) =
     Node { node | onFrame = Just props }
 
@@ -582,18 +582,18 @@ thisNodeHasUpdate (Node node) =
     node.onFrame /= Nothing
 
 
-update : Context -> Node msg -> List msg
-update ctx (Node node) =
+update : Frame -> Node msg -> List msg
+update frame (Node node) =
     case node.kind of
         Group children ->
             let
                 childMsgs : List msg
                 childMsgs =
-                    List.concatMap (update ctx) children
+                    List.concatMap (update frame) children
             in
             case node.onFrame of
                 Just fn ->
-                    fn ctx :: childMsgs
+                    fn frame :: childMsgs
 
                 Nothing ->
                     childMsgs
@@ -601,7 +601,7 @@ update ctx (Node node) =
         _ ->
             case node.onFrame of
                 Just onFrame ->
-                    [ onFrame ctx ]
+                    [ onFrame frame ]
 
                 Nothing ->
                     []

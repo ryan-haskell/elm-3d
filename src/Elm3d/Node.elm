@@ -53,7 +53,7 @@ module Elm3d.Node exposing
 -}
 
 import Elm3d.Color exposing (Color)
-import Elm3d.Context
+import Elm3d.Frame
 import Elm3d.Input.Event
 import Elm3d.Internals.Node as Node
 import Elm3d.Texture
@@ -295,10 +295,10 @@ withScaleZ props node =
 
 {-| Provide a message to call every frame.
 
-    import Elm3d.Context exposing (Context)
+    import Elm3d.Frame exposing (Frame)
 
     type Msg
-        = TavernOnFrame Context
+        = TavernOnFrame Frame
 
     myCube : Node Msg
     myCube =
@@ -306,7 +306,7 @@ withScaleZ props node =
             |> withOnFrame TavernOnFrame
 
 -}
-withOnFrame : (Elm3d.Context.Context -> msg) -> Node msg -> Node msg
+withOnFrame : (Elm3d.Frame.Frame -> msg) -> Node msg -> Node msg
 withOnFrame props node =
     Node.withOnFrame props node
 

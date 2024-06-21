@@ -35,7 +35,7 @@ import Browser.Events
 import Elm3d.Camera exposing (Camera)
 import Elm3d.Color exposing (Color)
 import Elm3d.Component
-import Elm3d.Context exposing (Context)
+import Elm3d.Frame exposing (Frame)
 import Elm3d.Input.Event exposing (Event)
 import Elm3d.Internals.Node as Node exposing (Node)
 import Elm3d.Internals.Program exposing (..)

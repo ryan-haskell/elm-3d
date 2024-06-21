@@ -14,7 +14,7 @@ elm install ryan-haskell/elm-3d
 
 ```elm
 import Elm3d.Camera exposing (Camera)
-import Elm3d.Context exposing (Context)
+import Elm3d.Frame exposing (Frame)
 import Elm3d.Node exposing (Node)
 import Elm3d.Program exposing (Program, View)
 import Elm3d.Viewport
@@ -49,14 +49,14 @@ init =
 
 
 type Msg
-    = Spin Context
+    = Spin Frame
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Spin ctx ->
-            { model | angle = model.angle + ctx.dt }
+        Spin frame ->
+            { model | angle = model.angle + frame.dt }
 
 
 

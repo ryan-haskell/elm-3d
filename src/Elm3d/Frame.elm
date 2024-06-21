@@ -1,5 +1,5 @@
-module Elm3d.Context exposing
-    ( Context
+module Elm3d.Frame exposing
+    ( Frame
     , isKeyPressed
     , isLeftClickPressed, isMiddleClickPressed, isRightClickPressed
     , toInputAxis, toInputVector
@@ -7,7 +7,7 @@ module Elm3d.Context exposing
 
 {-| This module allows you to access information every frame of your 3D program.
 
-@docs Context
+@docs Frame
 
 
 # **Keyboard input**
@@ -34,7 +34,7 @@ import Elm3d.Vector2 exposing (Vector2)
 {-| You can use this to find out how much time has elapsed since the last frame, get the current time, or
 determine what inputs are currently being pressed.
 -}
-type alias Context =
+type alias Frame =
     { dt : Float
     , time : Float
     , input : Elm3d.Input.Model
@@ -45,48 +45,48 @@ type alias Context =
 
     isJumping : Bool
     isJumping =
-        Elm3d.Context.isKeyPressed ctx KEY_SPACE
+        Elm3d.Frame.isKeyPressed frame KEY_SPACE
 
 -}
-isKeyPressed : Key -> Context -> Bool
-isKeyPressed key ctx =
-    Elm3d.Input.isKeyPressed ctx.input key
+isKeyPressed : Key -> Frame -> Bool
+isKeyPressed key frame =
+    Elm3d.Input.isKeyPressed frame.input key
 
 
 {-| Determines if the mouse left-click button is pressed
 
     isAttacking : Bool
     isAttacking =
-        Elm3d.Context.isLeftClickPressed ctx
+        Elm3d.Frame.isLeftClickPressed frame
 
 -}
-isLeftClickPressed : Context -> Bool
-isLeftClickPressed ctx =
-    Elm3d.Input.isLeftClickPressed ctx.input
+isLeftClickPressed : Frame -> Bool
+isLeftClickPressed frame =
+    Elm3d.Input.isLeftClickPressed frame.input
 
 
 {-| Determines if the mouse right-click button is pressed
 
     isRotatingCamera : Bool
     isRotatingCamera =
-        Elm3d.Context.isRightClickPressed ctx
+        Elm3d.Frame.isRightClickPressed frame
 
 -}
-isRightClickPressed : Context -> Bool
-isRightClickPressed ctx =
-    Elm3d.Input.isRightClickPressed ctx.input
+isRightClickPressed : Frame -> Bool
+isRightClickPressed frame =
+    Elm3d.Input.isRightClickPressed frame.input
 
 
 {-| Determines if the mouse middle-click button is pressed
 
     isClickingScrollwheel : Bool
     isClickingScrollwheel =
-        Elm3d.Context.isMiddleClickPressed ctx
+        Elm3d.Frame.isMiddleClickPressed frame
 
 -}
-isMiddleClickPressed : Context -> Bool
-isMiddleClickPressed ctx =
-    Elm3d.Input.isMiddleClickPressed ctx.input
+isMiddleClickPressed : Frame -> Bool
+isMiddleClickPressed frame =
+    Elm3d.Input.isMiddleClickPressed frame.input
 
 
 {-| Get a value from -1 to 1 to represent the current value of a key.
@@ -100,21 +100,21 @@ isMiddleClickPressed ctx =
 ```elm
 carMoveDirection : Float
 carMoveDirection =
-    Elm3d.Context.toInputAxis ctx
+    Elm3d.Frame.toInputAxis frame
         ( KEY_ARROW_DOWN, KEY_ARROW_UP )
 ```
 
 -}
-toInputAxis : Context -> ( Key, Key ) -> Float
-toInputAxis ctx ( left, right ) =
-    if isKeyPressed right ctx then
-        if isKeyPressed left ctx then
+toInputAxis : Frame -> ( Key, Key ) -> Float
+toInputAxis frame ( left, right ) =
+    if isKeyPressed right frame then
+        if isKeyPressed left frame then
             0
 
         else
             1
 
-    else if isKeyPressed left ctx then
+    else if isKeyPressed left frame then
         -1
 
     else
@@ -125,26 +125,26 @@ toInputAxis ctx ( left, right ) =
 
     playerMovementDirection : Vector2
     playerMovementDirection =
-        Elm3d.Context.toInputVector ctx
+        Elm3d.Frame.toInputVector frame
             { x = ( KEY_ARROW_LEFT, KEY_ARROW_RIGHT )
             , y = ( KEY_ARROW_DOWN, KEY_ARROW_UP )
             }
 
 -}
 toInputVector :
-    Context
+    Frame
     ->
         { x : ( Key, Key )
         , y : ( Key, Key )
         }
     -> Vector2
-toInputVector ctx keys =
+toInputVector frame keys =
     let
         x =
-            toInputAxis ctx keys.x
+            toInputAxis frame keys.x
 
         y =
-            toInputAxis ctx keys.y
+            toInputAxis frame keys.y
     in
     if x == 0 && y == 0 then
         Elm3d.Vector2.zero

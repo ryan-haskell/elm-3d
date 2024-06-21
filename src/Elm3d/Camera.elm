@@ -35,7 +35,7 @@ module Elm3d.Camera exposing
 -}
 
 import Elm3d.Camera.Projection exposing (Projection(..))
-import Elm3d.Context exposing (Context)
+import Elm3d.Frame exposing (Frame)
 import Elm3d.Input.Event
 import Elm3d.Internals.Camera as Camera exposing (Camera(..))
 import Elm3d.Internals.Node as Node exposing (Node)
@@ -288,10 +288,10 @@ withRotationZ props (Camera node) =
 
 {-| Provide a message to call every frame.
 
-    import Elm3d.Context exposing (Context)
+    import Elm3d.Frame exposing (Frame)
 
     type Msg
-        = CameraOnFrame Context
+        = CameraOnFrame Frame
 
     camera : Camera Msg
     camera =
@@ -302,7 +302,7 @@ withRotationZ props (Camera node) =
             |> withOnFrame CameraOnFrame
 
 -}
-withOnFrame : (Context -> msg) -> Camera msg -> Camera msg
+withOnFrame : (Frame -> msg) -> Camera msg -> Camera msg
 withOnFrame fn (Camera node) =
     Camera (Node.withOnFrame fn node)
 

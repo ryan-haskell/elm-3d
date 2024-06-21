@@ -26,8 +26,8 @@ import Browser.Dom
 import Browser.Events
 import Elm3d.Asset
 import Elm3d.Color exposing (Color)
-import Elm3d.Context exposing (Context)
 import Elm3d.FixedSet as FixedSet exposing (FixedSet)
+import Elm3d.Frame exposing (Frame)
 import Elm3d.Input
 import Elm3d.Input.Event exposing (Event)
 import Elm3d.Internals.Camera as Camera exposing (Camera)
@@ -183,7 +183,7 @@ update :
     , camera : Camera msg
     , nodes : List (Node msg)
 
-    -- , onFrame : Maybe (Context -> msg)
+    -- , onFrame : Maybe (Frame -> msg)
     -- , onInput : Maybe (Event -> msg)
     }
     -> ( model, Cmd msg )
@@ -221,8 +221,8 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
                 time =
                     model.time + dt
 
-                ctx : Context
-                ctx =
+                frame : Frame
+                frame =
                     { dt = dt
                     , time = time
                     , input = model.input
@@ -230,11 +230,11 @@ update ({ camera, nodes, msg, toModel, toMsg } as props) =
 
                 cameraMsgs : List msg
                 cameraMsgs =
-                    Camera.update ctx camera
+                    Camera.update frame camera
 
                 nodesMsgs : List msg
                 nodesMsgs =
-                    List.concatMap (Node.update ctx) nodes
+                    List.concatMap (Node.update frame) nodes
             in
             ( Model
                 { model
