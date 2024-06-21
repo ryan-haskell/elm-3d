@@ -253,7 +253,7 @@ view model =
 market : Node
 market =
     Elm3d.Node.obj
-        { url = "/assets/medieval_hexagon/building_market_blue.obj"
+        { url = "/assets/market.obj"
         }
         |> Elm3d.Node.withRotationY (pi / 4)
 
@@ -305,7 +305,7 @@ npcRunningAroundTavern model =
 tavern : Node
 tavern =
     Elm3d.Node.obj
-        { url = "/assets/medieval_hexagon/building_tavern_blue.obj"
+        { url = "/assets/tavern.obj"
         }
 
 
@@ -326,7 +326,7 @@ runningNpc model =
 church : Node
 church =
     Elm3d.Node.obj
-        { url = "/assets/medieval_hexagon/building_church_blue.obj"
+        { url = "/assets/church.obj"
         }
         |> Elm3d.Node.withScale (Elm3d.Vector3.fromFloat 2)
         |> Elm3d.Node.withRotationY (pi / 2)
@@ -358,7 +358,7 @@ toTreeNode offset =
             pi * 2 * toFloat offset / toFloat treeCount
     in
     Elm3d.Node.obj
-        { url = "/assets/medieval_hexagon/trees_A_large.obj"
+        { url = "/assets/trees.obj"
         }
         |> Elm3d.Node.withScale (Elm3d.Vector3.fromFloat 8)
         |> Elm3d.Node.withPositionX (16 * cos angle)

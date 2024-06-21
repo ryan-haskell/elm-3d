@@ -91,19 +91,17 @@ buildings model =
 
 tavern : Node Msg
 tavern =
-    Elm3d.Node.obj
-        { url = "/assets/buildings/tavern.obj"
-        }
+    Elm3d.Node.obj { url = "/assets/tavern.obj" }
         |> Elm3d.Node.withPositionX 1
 
 
 church : Node Msg
 church =
-    Elm3d.Node.obj
-        { url = "/assets/buildings/church.obj"
-        }
+    Elm3d.Node.obj { url = "/assets/church.obj" }
         |> Elm3d.Node.withPositionX -1
 ```
+
+You can [view more examples here](https://github.com/ryan-haskell/elm-3d/blob/main/example) using `elm reactor`.
 
 ## **Disclaimer**
 

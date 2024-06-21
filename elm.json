@@ -3,7 +3,7 @@
     "name": "ryan-haskell/elm-3d",
     "summary": "A package for making 3D games and apps in Elm",
     "license": "BSD-3-Clause",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "exposed-modules": [
         "Elm3d.Program",
         "Elm3d.Camera",

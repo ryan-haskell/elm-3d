@@ -2,6 +2,7 @@ module Elm3d.Component exposing
     ( Model, init
     , Msg, update, subscriptions
     , view
+    , isLoadingAssets
     )
 
 {-| This module allows you to embed Elm3D anywhere you like in an existing application. If you want your whole page to be an Elm3D program, use [Elm3d.Program](./Elm3d-Program) instead.
@@ -18,6 +19,11 @@ For a full working example, I recommend taking a look at [Embedded.elm](https://
 @docs Model, init
 @docs Msg, update, subscriptions
 @docs view
+
+
+# **Loading screens**
+
+@docs isLoadingAssets
 
 -}
 
@@ -419,6 +425,24 @@ view ({ size, toMsg } as props) (Model model) =
 
     else
         viewCanvas
+
+
+{-| Returns `True` if any assets are still being loaded.
+
+This is helpful if you only want to show a loading view before your game assets are ready to render.
+
+    view : Model -> Html Msg
+    view model =
+        if Elm3d.Component.isLoadingAssets model.elm3d then
+            viewLoadingScreen
+
+        else
+            viewGame model
+
+-}
+isLoadingAssets : Model -> Bool
+isLoadingAssets (Model model) =
+    Elm3d.Asset.isLoadingAssets model.assets
 
 
 

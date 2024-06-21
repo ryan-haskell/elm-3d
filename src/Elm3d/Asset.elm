@@ -8,6 +8,7 @@ module Elm3d.Asset exposing
     , findPng
     , init
     , isLoading
+    , isLoadingAssets
     , update
     )
 
@@ -52,13 +53,12 @@ type Problem
 init : { objFileUrls : List String } -> ( Model, Cmd Msg )
 init { objFileUrls } =
     let
+        model : Model
         model =
             Model { dict = Dict.empty }
     in
     ( model
-    , Cmd.batch
-        [ fetchObjFiles model objFileUrls
-        ]
+    , fetchObjFiles model objFileUrls
     )
 
 
@@ -120,6 +120,10 @@ update msg (Model model) =
                 objFile =
                     Elm3d.File.Obj.parse url str
 
+                dictWithObjFile : Dict String Asset
+                dictWithObjFile =
+                    Dict.insert url (Obj (Success objFile)) model.dict
+
                 mtlUrls : List String
                 mtlUrls =
                     objFile.info.mtl
@@ -129,9 +133,10 @@ update msg (Model model) =
             ( Model
                 { model
                     | dict =
-                        mtlUrls
-                            |> List.foldl (\k -> Dict.insert k (Mtl Loading))
-                                (Dict.insert url (Obj (Success objFile)) model.dict)
+                        List.foldl
+                            (insertIfMissing (Mtl Loading))
+                            dictWithObjFile
+                            mtlUrls
                 }
             , Cmd.batch (List.map (fetchMtlFile (Model model)) mtlUrls)
             )
@@ -147,6 +152,10 @@ update msg (Model model) =
                 mtlFile =
                     Elm3d.File.Mtl.parse url str
 
+                dictWithMtlFile : Dict String Asset
+                dictWithMtlFile =
+                    Dict.insert url (Mtl (Success mtlFile)) model.dict
+
                 pngTextureUrls : List String
                 pngTextureUrls =
                     Dict.values mtlFile.materials
@@ -158,11 +167,10 @@ update msg (Model model) =
             ( Model
                 { model
                     | dict =
-                        pngTextureUrls
-                            |> List.foldl (\k -> Dict.insert k (Png Loading))
-                                (model.dict
-                                    |> Dict.insert url (Mtl (Success mtlFile))
-                                )
+                        List.foldl
+                            (insertIfMissing (Png Loading))
+                            dictWithMtlFile
+                            pngTextureUrls
                 }
                 |> updateObjMeshes
             , Cmd.batch (List.map (fetchPngTexture (Model model)) pngTextureUrls)
@@ -187,6 +195,19 @@ update msg (Model model) =
             ( Model { model | dict = Dict.insert url (Png (Failure (Texture textureError))) model.dict }
             , Cmd.none
             )
+
+
+insertIfMissing : Asset -> String -> Dict String Asset -> Dict String Asset
+insertIfMissing value key dict =
+    Dict.update key
+        (\maybe ->
+            if maybe == Nothing then
+                Just value
+
+            else
+                maybe
+        )
+        dict
 
 
 updateObjMeshes : Model -> Model
@@ -257,14 +278,26 @@ isLoading url (Model { dict }) =
         Nothing ->
             False
 
-        Just (Obj loadable) ->
+        Just asset ->
+            isLoadingAsset asset
+
+
+isLoadingAsset : Asset -> Bool
+isLoadingAsset asset =
+    case asset of
+        Obj loadable ->
             loadable == Loading
 
-        Just (Mtl loadable) ->
+        Mtl loadable ->
             loadable == Loading
 
-        Just (Png loadable) ->
+        Png loadable ->
             loadable == Loading
+
+
+isLoadingAssets : Model -> Bool
+isLoadingAssets (Model { dict }) =
+    List.any isLoadingAsset (Dict.values dict)
 
 
 findMtlKd : Elm3d.File.Obj.Data -> String -> String -> Model -> Vector3
